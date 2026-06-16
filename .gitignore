@@ -33,4 +33,3 @@ build/
 .vscode/
 
 ### PROJECT ###
-/src/main/resources/application.properties
