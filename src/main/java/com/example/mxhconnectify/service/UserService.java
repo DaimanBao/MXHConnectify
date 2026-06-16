@@ -48,7 +48,7 @@ public class UserService {
                 .username(registerDTO.getUsername())
                 .email(registerDTO.getEmail())
                 .password(encryptedPassword)
-                .bio(registerDTO.getBio())
+                .fullName(registerDTO.getFullName())
                 .isActive(false) // Mặc định khóa, chờ kích hoạt email
                 .emailToken(token)
                 .emailTokenExpiry(expiryTime)
@@ -56,7 +56,7 @@ public class UserService {
 
         userDAO.save(user);
 
-        emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), token);
+        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), token);
     }
 
     /**
@@ -126,7 +126,7 @@ public class UserService {
         userDAO.save(user);
 
         // Gọi sang EmailService để gửi đường dẫn thay đổi mật khẩu (Hãy chắc chắn bạn đã tạo hàm này trong EmailService)
-        emailService.sendResetPasswordEmail(user.getEmail(), user.getUsername(), token);
+        emailService.sendResetPasswordEmail(user.getEmail(), user.getFullName(), token);
     }
 
     /**

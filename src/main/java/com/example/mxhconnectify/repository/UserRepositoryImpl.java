@@ -59,6 +59,19 @@ public class UserRepositoryImpl implements UserDAO {
     }
 
     @Override
+    public Optional<User> findByFullName(String fullName) {
+        try {
+            User user = entityManager.createQuery(
+                    "SELECT u FROM User u WHERE u.full_name = :fullName", User.class)
+                    .setParameter("full_name", fullName)
+                    .getSingleResult();
+            return Optional.of(user);
+        }catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<User> findByUsernameOrEmail(String username, String email) {
         try {
             User user = entityManager.createQuery(
