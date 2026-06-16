@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Mini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Tùy chỉnh thanh cuộn tinh tế cho bảng tin */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #dbdbdb; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+
+<div class="flex h-screen overflow-hidden">
+
+    <aside class="w-20 xl:w-64 border-r border-gray-200 bg-white p-3 xl:p-6 flex flex-col justify-between h-full fixed left-0 top-0 z-50">
+        <div class="space-y-8">
+            <div class="py-2 px-3">
+                <h1 class="font-serif text-2xl font-bold hidden xl:block tracking-wide select-none">Instagram</h1>
+                <i class="fa-brands fa-instagram text-2xl xl:hidden"></i>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200 font-bold bg-gray-100">
+                    <i class="fa-solid fa-house text-xl"></i>
+                    <span class="hidden xl:inline text-sm">Trang chủ</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                    <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                    <span class="hidden xl:inline text-sm">Tìm kiếm</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                    <i class="fa-regular fa-compass text-xl"></i>
+                    <span class="hidden xl:inline text-sm">Khám phá</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                    <i class="fa-regular fa-paper-plane text-xl"></i>
+                    <span class="hidden xl:inline text-sm">Tin nhắn</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                    <i class="fa-regular fa-heart text-xl"></i>
+                    <span class="hidden xl:inline text-sm">Thông báo</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                    <i class="fa-regular fa-square-plus text-xl"></i>
+                    <span class="hidden xl:inline text-sm">Tạo bài viết</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="w-6 h-6 rounded-full object-cover border border-gray-300" alt="Avatar">
+                    <span class="hidden xl:inline text-sm">Trang cá nhân</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="mt-auto">
+            <button class="w-full flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200 text-left">
+                <i class="fa-solid fa-bars text-xl"></i>
+                <span class="hidden xl:inline text-sm">Xem thêm</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 pl-20 xl:pl-64 flex justify-center overflow-y-auto h-full">
+        <div class="w-full max-w-[935px] grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 px-4">
+
+            <section class="lg:col-span-2 space-y-6 max-w-[470px] mx-auto w-full pb-12">
+
+                <div class="bg-white border border-gray-200 rounded-xl p-4 flex space-x-4 overflow-x-auto shadow-sm">
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
+                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
+                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
+                        </div>
+                        <span class="text-xs text-gray-500 w-16 truncate text-center">user_cool</span>
+                    </div>
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
+                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
+                        </div>
+                        <span class="text-xs text-gray-500 w-16 truncate text-center">lan_anh.dev</span>
+                    </div>
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
+                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
+                        </div>
+                        <span class="text-xs text-gray-500 w-16 truncate text-center">alex_vng</span>
+                    </div>
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
+                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
+                            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
+                        </div>
+                        <span class="text-xs text-gray-500 w-16 truncate text-center">jennie_it</span>
+                    </div>
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
+                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
+                            <img src="https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
+                        </div>
+                        <span class="text-xs text-gray-500 w-16 truncate text-center">code_chill</span>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <div class="flex items-center justify-between p-3 border-b border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" class="w-8 h-8 rounded-full object-cover" alt="avatar">
+                                <div>
+                                    <span class="font-semibold text-sm hover:underline cursor-pointer">alex_vng</span>
+                                    <span class="text-gray-400 text-xs block">Quy Nhơn, Bình Định</span>
+                                </div>
+                            </div>
+                            <button class="hover:text-gray-500"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        <div class="w-full bg-black flex items-center justify-center max-h-[580px] overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800" class="w-full object-cover" alt="post image">
+                        </div>
+                        <div class="p-3 space-y-2">
+                            <div class="flex justify-between items-center text-2xl">
+                                <div class="flex space-x-4">
+                                    <button class="hover:opacity-60 transition text-red-500"><i class="fa-solid fa-heart"></i></button>
+                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-comment"></i></button>
+                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-paper-plane"></i></button>
+                                </div>
+                                <button class="hover:opacity-60 transition"><i class="fa-regular fa-bookmark"></i></button>
+                            </div>
+                            <div class="font-semibold text-sm">1,245 lượt thích</div>
+                            <div class="text-sm">
+                                <span class="font-semibold mr-2">alex_vng</span> Bình yên một thoáng quê hương... 🌊✨ #travel #quynhon
+                            </div>
+                            <div class="text-gray-400 text-sm cursor-pointer hover:text-gray-500">Xem tất cả 42 bình luận</div>
+                            <div class="text-gray-400 text-[10px] uppercase tracking-wide">2 giờ trước</div>
+                        </div>
+                        <div class="p-3 border-t border-gray-100 flex items-center justify-between">
+                            <div class="flex items-center space-x-2 flex-1 mr-2">
+                                <i class="fa-regular fa-face-smile text-xl text-gray-500 cursor-pointer"></i>
+                                <input type="text" placeholder="Thêm bình luận..." class="w-full text-sm outline-none bg-transparent">
+                            </div>
+                            <button class="text-blue-500 font-semibold text-sm hover:text-blue-700 transition">Đăng</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <div class="flex items-center justify-between p-3 border-b border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150" class="w-8 h-8 rounded-full object-cover" alt="avatar">
+                                <div>
+                                    <span class="font-semibold text-sm hover:underline cursor-pointer">jennie_it</span>
+                                    <span class="text-gray-400 text-xs block">Hồ Chí Minh, Việt Nam</span>
+                                </div>
+                            </div>
+                            <button class="hover:text-gray-500"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        <div class="w-full bg-black flex items-center justify-center max-h-[580px] overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800" class="w-full object-cover" alt="post image">
+                        </div>
+                        <div class="p-3 space-y-2">
+                            <div class="flex justify-between items-center text-2xl">
+                                <div class="flex space-x-4">
+                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-heart"></i></button>
+                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-comment"></i></button>
+                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-paper-plane"></i></button>
+                                </div>
+                                <button class="hover:opacity-60 transition"><i class="fa-regular fa-bookmark"></i></button>
+                            </div>
+                            <div class="font-semibold text-sm">340 lượt thích</div>
+                            <div class="text-sm">
+                                <span class="font-semibold mr-2">jennie_it</span> Lại một ngày ngồi fix bug quên lối về... 💻☕ #springboot #developer
+                            </div>
+                            <div class="text-gray-400 text-sm cursor-pointer hover:text-gray-500">Xem tất cả 12 bình luận</div>
+                            <div class="text-gray-400 text-[10px] uppercase tracking-wide">5 giờ trước</div>
+                        </div>
+                        <div class="p-3 border-t border-gray-100 flex items-center justify-between">
+                            <div class="flex items-center space-x-2 flex-1 mr-2">
+                                <i class="fa-regular fa-face-smile text-xl text-gray-500 cursor-pointer"></i>
+                                <input type="text" placeholder="Thêm bình luận..." class="w-full text-sm outline-none bg-transparent">
+                            </div>
+                            <button class="text-blue-500 font-semibold text-sm hover:text-blue-700 transition">Đăng</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="hidden lg:block w-full max-w-[320px] pt-4 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="w-14 h-14 rounded-full object-cover border border-gray-200" alt="Current User">
+                        <div>
+                            <span class="font-semibold text-sm block cursor-pointer">bao_software</span>
+                            <span class="text-gray-400 text-sm block">Nguyễn Văn Bảo</span>
+                        </div>
+                    </div>
+                    <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Chuyển</button>
+                </div>
+
+                <div class="flex justify-between items-center text-sm font-semibold pt-4">
+                    <span class="text-gray-400">Gợi ý cho bạn</span>
+                    <button class="text-gray-800 text-xs hover:text-gray-400">Xem tất cả</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150" class="w-8 h-8 rounded-full object-cover" alt="suggest">
+                            <div>
+                                <span class="font-semibold text-xs block hover:underline cursor-pointer">lucy.dev</span>
+                                <span class="text-gray-400 text-[10px] block">Có lan_anh.dev theo dõi</span>
+                            </div>
+                        </div>
+                        <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="w-8 h-8 rounded-full object-cover" alt="suggest">
+                            <div>
+                                <span class="font-semibold text-xs block hover:underline cursor-pointer">clara_le</span>
+                                <span class="text-gray-400 text-[10px] block">Gợi ý từ Instagram</span>
+                            </div>
+                        </div>
+                        <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" class="w-8 h-8 rounded-full object-cover" alt="suggest">
+                            <div>
+                                <span class="font-semibold text-xs block hover:underline cursor-pointer">quynh_nhon_chill</span>
+                                <span class="text-gray-400 text-[10px] block">Mới tham gia Instagram</span>
+                            </div>
+                        </div>
+                        <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
+                    </div>
+                </div>
+
+                <footer class="text-[11px] text-gray-300 space-y-4 pt-6 select-none">
+                    <p class="uppercase">Giới thiệu • Trợ giúp • Báo chí • API • Việc làm • Quyền riêng tư • Điều khoản</p>
+                    <p>© 2026 INSTAGRAM MINI FROM SPRING BOOT</p>
+                </footer>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

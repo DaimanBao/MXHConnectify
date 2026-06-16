@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực tài khoản • Instagram Mini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 flex flex-col justify-center items-center min-h-screen p-4 text-gray-900 font-sans antialiased">
+
+<div class="w-full max-w-[400px] bg-white border border-gray-200 p-8 flex flex-col items-center rounded-sm shadow-sm text-center">
+
+    <h1 class="font-serif text-3xl font-bold tracking-wide mb-8 select-none">Instagram</h1>
+
+    <div th:if="${isVerified}" class="space-y-4 w-full">
+        <div class="text-green-500 class-i-wrapper">
+            <i class="fas fa-check-circle text-6xl"></i>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Xác thực thành công!</h2>
+        <p class="text-gray-500 text-sm">Tài khoản của bạn đã được kích hoạt hoàn toàn. Giờ đây bạn đã có thể khám phá Instagram Mini.</p>
+    </div>
+
+    <div th:if="${!isVerified}" class="space-y-4 w-full">
+        <div class="text-red-500 class-i-wrapper">
+            <i class="fas fa-times-circle text-6xl"></i>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Xác thực thất bại!</h2>
+        <p class="text-gray-500 text-sm">Mã xác thực không hợp lệ hoặc đã hết hạn (quá 15 phút). Vui lòng thực hiện đăng ký lại để nhận mã mới.</p>
+    </div>
+
+    <hr class="w-full border-gray-100 my-6">
+
+    <div class="w-full space-y-3">
+        <p class="text-xs text-gray-400">
+            Hệ thống sẽ tự động chuyển hướng về trang Đăng nhập sau <span id="countdown" class="font-bold text-gray-600">5</span> giây...
+        </p>
+        <a href="/login" class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm py-2 rounded transition duration-200">
+            Chuyển đến trang Đăng nhập ngay
+        </a>
+    </div>
+</div>
+
+<script>
+    let seconds = 5;
+    const countdownElement = document.getElementById('countdown');
+
+    const interval = setInterval(() => {
+        seconds--;
+        countdownElement.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(interval);
+            window.location.href = '/login'; // Chuyển hướng khi đếm về 0
+        }
+    }, 1000);
+</script>
+
+</body>
+</html>
