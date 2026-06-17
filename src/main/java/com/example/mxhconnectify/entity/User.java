@@ -1,6 +1,9 @@
 package com.example.mxhconnectify.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,20 +23,31 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Tên tài khoản không được để trống")
+    @Size(min = 3, max = 50, message = "Username phải từ 3 đến 50 ký tự")
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không đúng định dạng")
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @NotBlank(message = "Mật khẩu không được để trống")
+    @Size(min = 6, message = "Mật khẩu phải chứa ít nhất 6 ký tự")
     @Column(nullable = false)
     private String password;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     // --- CÁC TRƯỜNG MỚI PHỤC VỤ PROFILE V1 ---
 
+    @NotBlank(message = "Tên đầy đủ không được để trống")
+    @Size(min = 2, max = 100, message = "Tên đầy đủ phải từ 8 ký tự trở lên")
     @Column(name = "full_name", length = 100)
     private String fullName; // Tên hiển thị (Ví dụ: Nguyễn Văn Bảo)
 

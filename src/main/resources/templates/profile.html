@@ -6,46 +6,42 @@
     <title>Trang cá nhân • Instagram Mini</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hiệu ứng trượt vào từ bên phải */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased">
 
+<div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-3">
+
+    <div id="success-toast" th:if="${successMessage}"
+         class="bg-white border-l-4 border-green-500 shadow-lg p-4 rounded-lg flex items-center space-x-3 animate-slide-in">
+        <i class="fa-solid fa-circle-check text-green-500"></i>
+        <span class="text-sm text-gray-700 font-medium" th:text="${successMessage}"></span>
+    </div>
+
+    <div id="error-toast" th:if="${errorMessage}"
+         class="bg-white border-l-4 border-red-500 shadow-lg p-4 rounded-lg flex items-center space-x-3 animate-slide-in">
+        <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+        <span class="text-sm text-gray-700 font-medium" th:text="${errorMessage}"></span>
+    </div>
+</div>
+
 <div class="flex h-screen overflow-hidden">
 
-    <aside class="w-20 xl:w-64 border-r border-gray-200 bg-white p-3 xl:p-6 flex flex-col justify-between h-full fixed left-0 top-0 z-50">
-        <div class="space-y-8">
-            <div class="py-2 px-3">
-                <h1 class="font-serif text-2xl font-bold hidden xl:block tracking-wide select-none">Instagram</h1>
-                <i class="fa-brands fa-instagram text-2xl xl:hidden"></i>
-            </div>
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{modals/edit-profile-modal :: editProfileModal}"></div>
 
-            <nav class="space-y-2">
-                <a href="/home" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
-                    <i class="fa-solid fa-house text-xl"></i>
-                    <span class="hidden xl:inline text-sm">Trang chủ</span>
-                </a>
-                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
-                    <i class="fa-solid fa-magnifying-glass text-xl"></i>
-                    <span class="hidden xl:inline text-sm">Tìm kiếm</span>
-                </a>
-                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
-                    <i class="fa-regular fa-paper-plane text-xl"></i>
-                    <span class="hidden xl:inline text-sm">Tin nhắn</span>
-                </a>
-                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
-                    <i class="fa-regular fa-square-plus text-xl"></i>
-                    <span class="hidden xl:inline text-sm">Tạo bài viết</span>
-                </a>
-                <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200 font-bold bg-gray-100">
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="w-6 h-6 rounded-full object-cover border border-gray-300" alt="Avatar">
-                    <span class="hidden xl:inline text-sm">Trang cá nhân</span>
-                </a>
-            </nav>
-        </div>
-    </aside>
 
     <main class="flex-1 pl-20 xl:pl-64 overflow-y-auto h-full flex justify-center">
         <div class="w-full max-w-[935px] pt-8 px-4 pb-12">
-
             <header class="grid grid-cols-3 gap-4 md:gap-10 pb-10 border-b border-gray-200 items-center">
                 <div class="flex justify-center">
                     <div class="w-20 h-20 md:w-36 md:h-36 rounded-full p-[3px] bg-gray-200 cursor-pointer relative group">
@@ -58,9 +54,9 @@
 
                 <div class="col-span-2 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
-                        <h2 class="text-xl font-light tracking-wide">bao_software</h2>
+                        <h2 class="text-xl font-light tracking-wide" th:text="${user.username}">bao_software</h2>
                         <div class="flex space-x-2">
-                            <button class="bg-gray-100 hover:bg-gray-200 text-black text-sm font-semibold px-4 py-1.5 rounded-lg transition duration-200">
+                            <button th:if="${isOwner}" onclick="openEditModal()" class="bg-gray-100 hover:bg-gray-200 text-black text-sm font-semibold px-4 py-1.5 rounded-lg transition duration-200">
                                 Chỉnh sửa trang cá nhân
                             </button>
                             <button class="bg-gray-100 hover:bg-gray-200 text-black text-sm p-1.5 rounded-lg transition duration-200">
@@ -76,12 +72,18 @@
                     </ul>
 
                     <div class="text-sm space-y-1">
-                        <h1 class="font-semibold">Nguyễn Văn Bảo</h1>
-                        <p class="text-gray-500 text-xs">Kỹ sư Phần mềm • Đại học Quy Nhơn 🎓</p>
-                        <p class="text-gray-700">Xây dựng mọi thứ bằng Spring Boot & Java 💻☕. Chào mừng tới Instagram Mini!</p>
-                        <a href="https://github.com" target="_blank" class="text-blue-900 font-semibold block hover:underline text-xs">
-                            <i class="fa-brands fa-github mr-1"></i>github.com/bao_software
-                        </a>
+                        <h1 class="font-semibold" th:text="${user.fullName}">Nguyễn Văn Bảo</h1>
+                        <p class="text-gray-500 text-xs" th:text="${user.headline} ?: 'Chưa có mô tả nào ở Head Line.'">Kỹ sư Phần mềm • Đại học Quy Nhơn 🎓</p>
+                        <p class="text-gray-700" th:text="${user.description} ?: 'Chưa có mô tả nào ở Description.'">Xây dựng mọi thứ bằng Spring Boot & Java 💻☕. Chào mừng tới Instagram Mini!</p>
+                        <div th:if="${not #lists.isEmpty(user.communityLinksList)}">
+                            <p class="text-xs font-semibold mb-1">Liên kết của tôi:</p>
+                            <a th:each="link : ${user.communityLinksList}"
+                               th:href="${link}"
+                               target="_blank"
+                               class="text-blue-900 font-semibold block hover:underline text-xs">
+                                <i class="fa-solid fa-link mr-1"></i> <span th:text="${link}"></span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -152,5 +154,90 @@
     </main>
 </div>
 
+
+<script th:inline="javascript">
+    // Khởi tạo mảng lưu trữ danh sách link liên kết
+    let linksArray = [];
+
+    // HÀM MỞ MODAL: Mỗi lần mở lên sẽ tự lấy data gốc từ DB nạp vào giao diện hàng link
+    function openEditModal() {
+        // Lấy chuỗi link gốc trực tiếp từ đối tượng user của Thymeleaf
+        let initialLinksStr = [[${user.communityLinks}]] || "";
+
+        // Cắt chuỗi thành mảng các link sạch sẽ
+        linksArray = initialLinksStr ? initialLinksStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+
+        // Hiển thị Modal
+        document.getElementById('editProfileModal').classList.remove('hidden');
+
+        // Vẽ các hàng link hiện có lên màn hình
+        renderLinks();
+    }
+
+    // HÀM ĐÓNG MODAL
+    function closeEditModal() {
+        document.getElementById('editProfileModal').classList.add('hidden');
+    }
+
+    // Hàm vẽ danh sách các hàng link kèm nút xóa (x)
+    function renderLinks() {
+        const container = document.getElementById('linksContainer');
+        if (!container) return;
+        container.innerHTML = ''; // Xóa sạch khung chứa trước khi vẽ lại
+
+        linksArray.forEach((link, index) => {
+            const linkRow = document.createElement('div');
+            linkRow.className = "flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 text-xs text-blue-900 font-medium";
+
+            linkRow.innerHTML = `
+                <div class="flex items-center space-x-2 truncate">
+                    <i class="fa-solid fa-link text-blue-400 text-[10px]"></i>
+                    <span class="truncate">${link}</span>
+                </div>
+                <button type="button" onclick="removeLink(${index})" class="text-blue-400 hover:text-red-500 font-bold ml-2 text-sm focus:outline-none">
+                    &times;
+                </button>
+            `;
+            container.appendChild(linkRow);
+        });
+    }
+
+    // Hàm xử lý khi người dùng nhập thêm link mới và bấm "Thêm"
+    function addLinkFromInput() {
+        const input = document.getElementById('linkInput');
+        const value = input.value.trim();
+
+        if (value !== "") {
+            if(!linksArray.includes(value)) {
+                linksArray.push(value);
+                renderLinks();
+            }
+            input.value = ""; // Clear ô nhập sau khi thêm thành công
+        }
+    }
+
+    // Hàm xóa nhanh 1 hàng link khi nhấn dấu X
+    function removeLink(index) {
+        linksArray.splice(index, 1);
+        renderLinks(); // Cập nhật lại giao diện ngay lập tức
+    }
+
+    // Hàm gom mảng lại thành chuỗi phân tách bởi dấu phẩy trước khi nhấn nút Submit Form gửi lên Server
+    function prepareSubmitData() {
+        document.getElementById('finalLinksInput').value = linksArray.join(',');
+    }
+
+    // Tự động ẩn thông báo sau 3 giây
+    document.addEventListener("DOMContentLoaded", function() {
+        const toasts = document.querySelectorAll('#success-toast, #error-toast');
+        toasts.forEach(toast => {
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500); // Xóa khỏi DOM sau khi ẩn
+            }, 3000); // 3000ms = 3 giây
+        });
+    });
+</script>
 </body>
 </html>

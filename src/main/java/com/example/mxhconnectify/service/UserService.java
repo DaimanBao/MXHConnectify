@@ -2,6 +2,7 @@ package com.example.mxhconnectify.service;
 
 import com.example.mxhconnectify.dao.UserDAO;
 import com.example.mxhconnectify.dto.LoginDTO;
+import com.example.mxhconnectify.dto.ProfileUpdateDTO;
 import com.example.mxhconnectify.dto.RegisterDTO;
 import com.example.mxhconnectify.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,5 +169,18 @@ public class UserService {
         user.setForgotPasswordTokenExpiry(null);
 
         userDAO.save(user);
+    }
+
+    @Transactional
+    public void updateProfile(User user) {
+        User existingUser = userDAO.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+
+        existingUser.setFullName(user.getFullName());
+        existingUser.setHeadline(user.getHeadline());
+        existingUser.setDescription(user.getDescription());
+        existingUser.setCommunityLinks(user.getCommunityLinks());
+
+        userDAO.save(existingUser);
     }
 }
