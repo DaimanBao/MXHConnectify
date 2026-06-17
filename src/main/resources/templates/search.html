@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm kiếm • Instagram Mini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+
+<div class="flex h-screen">
+
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <main class="flex-1 pl-20 xl:pl-64 h-screen overflow-y-auto">
+        <div class="max-w-2xl mx-auto pt-10 px-6 pb-20">
+
+            <h2 class="text-2xl font-bold mb-8">Tìm kiếm</h2>
+
+            <div class="relative mb-10">
+                <input type="text" id="search-input"
+                       placeholder="Nhập tên người dùng..."
+                       class="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 outline-none focus:border-gray-500 transition shadow-sm">
+                <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
+            </div>
+
+            <div id="search-results" class="space-y-6">
+            </div>
+
+            <div id="loading-spinner" class="text-center py-6 hidden">
+                <i class="fa-solid fa-spinner fa-spin text-2xl text-gray-400"></i>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    const searchInput = document.getElementById('search-input');
+    const resultsContainer = document.getElementById('search-results');
+    const spinner = document.getElementById('loading-spinner');
+
+    let currentPage = 0;
+    let currentKeyword = '';
+    let isLoading = false;
+
+    // Lắng nghe sự kiện gõ phím
+    searchInput.addEventListener('input', (e) => {
+        currentKeyword = e.target.value;
+        currentPage = 0;
+        resultsContainer.innerHTML = ''; // Xóa kết quả cũ khi keyword thay đổi
+
+        if (currentKeyword.trim().length > 0) {
+            fetchUsers(true);
+        }
+    });
+
+    // Hàm gọi API
+    async function fetchUsers() {
+        if (isLoading) return;
+        isLoading = true;
+        spinner.classList.remove('hidden');
+
+        try {
+            // Thay URL này bằng endpoint backend của bạn
+            const response = await fetch(`/api/users/search?keyword=${currentKeyword}&page=${currentPage}`);
+            const users = await response.json();
+
+            users.forEach(user => {
+                const userItem = `
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-100 rounded-xl transition">
+                        <div class="flex items-center space-x-4">
+                            <img src="${user.avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                                 class="w-12 h-12 rounded-full object-cover border border-gray-200">
+                            <div>
+                                <p class="font-semibold text-sm">${user.username}</p>
+                                <p class="text-xs text-gray-500">${user.fullName || ''}</p>
+                            </div>
+                        </div>
+                        <a href="/profile/${user.username}" class="text-blue-500 text-sm font-semibold hover:text-black">Trang cá nhân</a>
+                    </div>`;
+                resultsContainer.innerHTML += userItem;
+            });
+
+            if(users.length > 0) currentPage++;
+        } catch (err) { console.error('Lỗi tìm kiếm:', err); }
+
+        isLoading = false;
+        spinner.classList.add('hidden');
+    }
+
+    // Lazy Loading khi cuộn chuột
+    window.addEventListener('scroll', () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50 && !isLoading) {
+            if (currentKeyword.trim().length > 0) fetchUsers();
+        }
+    });
+</script>
+
+</body>
+</html>
