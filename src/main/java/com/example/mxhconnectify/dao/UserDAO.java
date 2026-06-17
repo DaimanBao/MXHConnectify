@@ -1,6 +1,8 @@
 package com.example.mxhconnectify.dao;
 
 import com.example.mxhconnectify.entity.User;
+
+import java.util.List;
 import java.util.Optional;
 
 public interface UserDAO {
@@ -13,5 +15,6 @@ public interface UserDAO {
     boolean existsByEmail(String email);
     Optional<User> findByEmailToken(String emailToken);
     Optional<User> findByForgotPasswordToken(String token);
+    Optional<List<User>> getAllUsers();
     User save(User user); // Dùng cho cả thêm mới và cập nhật
 }

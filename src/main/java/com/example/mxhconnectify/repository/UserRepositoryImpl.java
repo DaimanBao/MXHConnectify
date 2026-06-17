@@ -6,6 +6,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Repository // Đánh dấu đây là tầng Repository thực hiện thao tác DB
@@ -124,5 +127,15 @@ public class UserRepositoryImpl implements UserDAO {
         } else {
             return entityManager.merge(user); // Cập nhật nếu đã có ID
         }
+    }
+
+    @Override
+    public Optional<List<User>> getAllUsers() {
+        // 1. Thực hiện query và nhận kết quả là một List
+        List<User> allUser = entityManager.createQuery("SELECT u FROM User u", User.class)
+                .getResultList();
+
+        // 2. Trả về Optional chứa danh sách đó (nếu list rỗng thì nó vẫn là một list rỗng)
+        return Optional.ofNullable(allUser);
     }
 }
