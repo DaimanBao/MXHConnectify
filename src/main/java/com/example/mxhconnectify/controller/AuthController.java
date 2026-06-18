@@ -138,7 +138,7 @@ public class AuthController {
 
         if (!registerDTO.getPassword().equals(registerDTO.getConfirmPassword())) {
             bindingResult.rejectValue("confirmPassword", "error.registerDTO", "Mật khẩu xác nhận không trùng khớp");
-            return "redirect:/register";
+            return "register";
         }
 
         try {
@@ -146,7 +146,7 @@ public class AuthController {
             return "redirect:/login?registered=true";
         } catch (RuntimeException e) {
             model.addAttribute("registerError", e.getMessage());
-            return "redirect:/register";
+            return "register";
         }
     }
 
