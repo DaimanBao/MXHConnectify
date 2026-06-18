@@ -38,14 +38,19 @@
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
     <div th:replace="~{modals/edit-profile-modal :: editProfileModal}"></div>
+    <div th:replace="~{modals/avatar-modal :: avatarModal}"></div>
 
 
     <main class="flex-1 pl-20 xl:pl-64 overflow-y-auto h-full flex justify-center">
         <div class="w-full max-w-[935px] pt-8 px-4 pb-12">
             <header class="grid grid-cols-3 gap-4 md:gap-10 pb-10 border-b border-gray-200 items-center">
                 <div class="flex justify-center">
-                    <div class="w-20 h-20 md:w-36 md:h-36 rounded-full p-[3px] bg-gray-200 cursor-pointer relative group">
-                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300" class="w-full h-full rounded-full object-cover border-4 border-white">
+                    <div class="w-20 h-20 md:w-36 md:h-36 rounded-full p-[3px] bg-gray-200 cursor-pointer relative group"
+                         onclick="openAvatarModal()">
+
+                        <img th:src="${user.avatarUrl != null ? (user.avatarUrl + '?t=' + #dates.createNow().getTime()) : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                             class="w-full h-full rounded-full object-cover border-4 border-white">
+
                         <div class="absolute inset-0 bg-black/40 rounded-full hidden group-hover:flex items-center justify-center text-white text-xs font-semibold">
                             <i class="fa-solid fa-camera text-xl"></i>
                         </div>
@@ -238,6 +243,14 @@
             }, 3000); // 3000ms = 3 giây
         });
     });
+
+    function openAvatarModal() {
+    document.getElementById('avatarModal').classList.remove('hidden');
+    }
+
+    function closeAvatarModal() {
+    document.getElementById('avatarModal').classList.add('hidden');
+    }
 </script>
 </body>
 </html>

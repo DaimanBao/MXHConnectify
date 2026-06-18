@@ -24,7 +24,8 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 // Tắt hẳn form login của Spring Security để không xung đột với AuthController
-                .formLogin(form -> form.disable());
+                .formLogin(form -> form.disable())
+                .logout(logout -> logout.disable()); // thêm dòng này
         return http.build();
     }
 }

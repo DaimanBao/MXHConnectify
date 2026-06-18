@@ -7,6 +7,7 @@ import com.example.mxhconnectify.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -107,16 +108,27 @@ public class AuthController {
 
     @GetMapping("/logout")
     public String logout(HttpServletRequest request, HttpServletResponse response) {
-        // 1. Phá hủy Session hiện tại
-        request.getSession().invalidate();
 
-        // 2. Gửi Cookie rác đè lên Cookie cũ với MaxAge = 0 để trình duyệt tự xóa sạch
-        Cookie cookie = new Cookie("remember_me_user", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+        // 1. AN TOÀN: Lấy session hiện tại, nếu không có (null) thì bỏ qua, không bị lỗi crash code
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate(); // Phá hủy session sạch sẽ trên RAM Server
+        }
 
-        return "redirect:/login";
+        // 2. XÓA COOKIE 1: Xóa cookie ghi nhớ tùy chỉnh của bạn
+        Cookie customCookie = new Cookie("remember_me_user", null);
+        customCookie.setMaxAge(0);
+        customCookie.setPath("/");
+        response.addCookie(customCookie);
+
+        // 3. XÓA COOKIE 2: Xóa nốt Cookie định danh cốt lõi của hệ thống Java Web để tránh lưu rác phiên
+        Cookie jsessionCookie = new Cookie("JSESSIONID", null);
+        jsessionCookie.setMaxAge(0);
+        jsessionCookie.setPath(request.getContextPath() + "/"); // Đảm bảo khớp chính xác Path hệ thống cấp phát
+        response.addCookie(jsessionCookie);
+
+        // Chuyển hướng sạch sẽ về trang login kèm tham số báo trạng thái đã logout (để UI nếu muốn có thể hiện thông báo)
+        return "redirect:/login"; // Trả về đường dẫn thuần, không bồi thêm đuôi query phía sau
     }
 
     // ================= LUỒNG ĐĂNG KÝ (REGISTER) =================

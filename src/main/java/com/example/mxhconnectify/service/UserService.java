@@ -10,7 +10,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -247,5 +254,27 @@ public class UserService {
                         .avatarUrl(user.getAvatarUrl())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public void updateAvatar(User user, MultipartFile file) throws IOException {
+        if (file.isEmpty()) throw new RuntimeException("Vui lòng chọn ảnh!");
+
+        // 1. Nếu user đã có ảnh cũ, xóa nó đi
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            // Giả sử avatarUrl lưu dạng "/uploads/abc.png"
+            // Bạn cần tách tên file ra và xóa file vật lý tương ứng
+            String oldFileName = user.getAvatarUrl().replace("/uploads/", "");
+            Path oldPath = Paths.get("E:/MXHConnectify/uploads/" + oldFileName);
+            Files.deleteIfExists(oldPath);
+        }
+
+        // 2. Lưu file mới như bình thường
+        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path path = Paths.get("E:/MXHConnectify/uploads/" + fileName);
+        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+        // 3. Cập nhật DB
+        user.setAvatarUrl("/uploads/" + fileName);
+        userRepository.save(user);
     }
 }
