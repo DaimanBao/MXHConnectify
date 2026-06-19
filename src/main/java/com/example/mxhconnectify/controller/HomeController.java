@@ -1,8 +1,10 @@
 package com.example.mxhconnectify.controller;
 
 import com.example.mxhconnectify.dto.SearchUserDTO;
+import com.example.mxhconnectify.entity.Like;
 import com.example.mxhconnectify.entity.Post;
 import com.example.mxhconnectify.entity.User;
+import com.example.mxhconnectify.service.LikeService;
 import com.example.mxhconnectify.service.PostService;
 import com.example.mxhconnectify.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,11 +27,13 @@ public class HomeController {
 
     private final PostService postService;
     private final UserService userService;
+    private final LikeService likeService;
 
     @Autowired
-    public HomeController(PostService postService,  UserService userService) {
+    public HomeController(PostService postService,  UserService userService,  LikeService likeService) {
         this.postService = postService;
         this.userService = userService;
+        this.likeService = likeService;
     }
 
     @GetMapping
@@ -44,8 +48,10 @@ public class HomeController {
         User currentUser = (User) session.getAttribute("currentUser");
 
         // 1. Lấy danh sách bài viết Newsfeed
-        int pageSize = 5;
+        int pageSize = 20;
         Page<Post> postPage = postService.getHomeFeed(currentUser, page, pageSize);
+        likeService.setLikeStatusForPosts(postPage.getContent(), currentUser);
+
         model.addAttribute("posts", postPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", postPage.getTotalPages());
@@ -58,6 +64,7 @@ public class HomeController {
         Pageable topFive = PageRequest.of(0, 5);
         List<SearchUserDTO> suggestionList = userService.getRandomUsers(currentUser.getId(), topFive);
         model.addAttribute("suggestions", suggestionList);
+
 
         return "home";
     }

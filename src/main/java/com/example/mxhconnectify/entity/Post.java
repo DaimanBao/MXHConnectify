@@ -46,6 +46,9 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Transient
+    private boolean isLikedByCurrentUser = false; // Biến tạm hỗ trợ hiển thị giao diện, không tạo cột trong DB
+
     // Quan hệ 1-N với Media
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Media> mediaList = new ArrayList<>();

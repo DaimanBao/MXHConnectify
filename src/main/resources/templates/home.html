@@ -121,13 +121,19 @@
                         <div class="p-3 space-y-2">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4 text-xl">
-                                    <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-heart"></i></button>
+                                    <button th:data-post-id="${post.id}"
+                                            onclick="toggleLikePost(this, this.getAttribute('data-post-id'))"
+                                            class="hover:scale-110 transition duration-200 text-gray-700">
+                                        <i th:class="${post.isLikedByCurrentUser} ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart'"></i>
+                                    </button>
                                     <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
                                 </div>
                                 <button class="text-xl hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-bookmark"></i></button>
                             </div>
 
-                            <p class="font-semibold text-sm text-gray-900" th:text="${post.likeCount} + ' lượt thích'">0 lượt thích</p>
+                            <p th:id="'like-count-' + ${post.id}"
+                               class="font-semibold text-sm text-gray-900"
+                               th:text="${post.likeCount != null ? post.likeCount : 0} + ' lượt thích'">0 lượt thích</p>
 
                             <div class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
                                 <div class="flex items-start space-x-1.5">
@@ -257,6 +263,40 @@
             button.disabled = false;
         }
     }
+
+    async function toggleLikePost(button, postId) {
+    const heartIcon = button.querySelector('i');
+    const likeCountTxt = document.getElementById(`like-count-${postId}`);
+
+    // Khóa nút tạm thời ngăn chặn user click spam phá hoại DB
+    button.disabled = true;
+
+    try {
+        const response = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+            // Nếu trạng thái trả về là đã Like thành công
+            if (data.liked) {
+                heartIcon.className = "fa-solid fa-heart text-red-500 transform scale-125 transition duration-100";
+                setTimeout(() => heartIcon.classList.remove('scale-125'), 100);
+            } else {
+                // Nếu trạng thái là Unlike thành công
+                heartIcon.className = "fa-regular fa-heart text-gray-700";
+            }
+
+            // Thay đổi số liệu text hiển thị ngay trên màn hình mà không hề load lại trang
+            likeCountTxt.innerText = `${data.likeCount} lượt thích`;
+        } else {
+            alert(data.message || "Có lỗi xảy ra khi thực hiện tương tác.");
+        }
+    } catch (err) {
+        console.error("Lỗi gửi tương tác Like bài viết:", err);
+    } finally {
+        // Mở khóa nút sau khi xử lý xong
+        button.disabled = false;
+    }
+}
 </script>
 </body>
 </html>

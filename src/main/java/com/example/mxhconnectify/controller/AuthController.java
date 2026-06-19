@@ -39,7 +39,7 @@ public class AuthController {
         // 1. Nếu đã có sẵn Session đăng nhập rồi, cho bay thẳng vào trang cá nhân luôn
         if (request.getSession().getAttribute("currentUser") != null) {
             User user = (User) request.getSession().getAttribute("currentUser");
-            return "redirect:/profile/" + user.getUsername();
+            return "redirect:/home";
         }
 
         // 2. Nếu chưa có Session, đi quét mảng Cookie xem người dùng có bật Remember Me trước đó không
@@ -59,7 +59,7 @@ public class AuthController {
                 if (userOpt.isPresent() && userOpt.get().isActive()) {
                     // TỰ ĐỘNG ĐĂNG NHẬP: Tái thiết lập Session tự động mà không cần bắt họ nhập form
                     request.getSession().setAttribute("currentUser", userOpt.get());
-                    return "redirect:/profile/" + userOpt.get().getUsername();
+                    return "redirect:/home";
                 }
             }
         }
