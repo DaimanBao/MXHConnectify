@@ -30,53 +30,22 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final FollowService followService;
 
-    @Autowired // Inject đầy đủ các bean cần thiết để xử lý nghiệp vụ
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService) {
+    @Autowired
+    public UserService(UserRepository userRepository
+            , BCryptPasswordEncoder passwordEncoder
+            , EmailService emailService
+            , FollowService followService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.followService = followService;
     }
 
     /**
      * Xử lý đăng ký tài khoản mới: Check trùng, băm mật khẩu, tạo token và bắn mail ngầm
      */
-//    public void registerNewUser(RegisterDTO registerDTO) {
-//        // 1. Kiểm tra tồn tại (Không cần Transaction ở đây, hoặc dùng transaction readOnly nếu muốn)
-//        if (userRepository.existsByUsername(registerDTO.getUsername())) {
-//            throw new RuntimeException("Tên tài khoản này đã tồn tại!");
-//        }
-//        if (userRepository.existsByEmail(registerDTO.getEmail())) {
-//            throw new RuntimeException("Email này đã được sử dụng!");
-//        }
-//
-//        // 2. Gọi hàm lưu vào DB có Transaction riêng
-//        User user = saveUserToDatabase(registerDTO);
-//
-//        // 3. Gửi mail SAU KHI transaction DB đã đóng (khi hàm saveUserToDatabase kết thúc)
-//        // Lúc này, khóa database đã được giải phóng, không còn bị lock timeout nữa
-//        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), user.getEmailToken());
-//    }
-//
-//
-//    @Transactional
-//    protected User saveUserToDatabase(RegisterDTO registerDTO) {
-//        String encryptedPassword = passwordEncoder.encode(registerDTO.getPassword());
-//        String token = UUID.randomUUID().toString();
-//        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(15);
-//
-//        User user = User.builder()
-//                .username(registerDTO.getUsername())
-//                .email(registerDTO.getEmail())
-//                .password(encryptedPassword)
-//                .fullName(registerDTO.getFullName())
-//                .isActive(false)
-//                .emailToken(token)
-//                .emailTokenExpiry(expiryTime)
-//                .build();
-//
-//        return userRepository.save(user);
-//    }
 
     @Transactional
     public void registerNewUser(RegisterDTO registerDTO) {
@@ -230,21 +199,23 @@ public class UserService {
         userRepository.save(existingUser);
     }
 
-    @Transactional(readOnly = true)
     public List<SearchUserDTO> searchUsersByKeyword(String keyword, Long currentId, Pageable pageable) {
-        // Truyền đủ 3 tham số: keyword, currentId, pageable
-        List<User> users = userRepository.searchByKeyword(keyword, currentId, pageable);
+        String searchKeyword = "%" + keyword + "%";
+        return userRepository.searchByKeyword(searchKeyword, currentId, pageable)
+                .stream()
+                .map(user -> {
+                    boolean isFollowing = followService.isFollowing(currentId, user.getId());
 
-        return users.stream()
-                .map(user -> SearchUserDTO.builder()
-                        .username(user.getUsername())
-                        .fullName(user.getFullName())
-                        .avatarUrl(user.getAvatarUrl())
-                        .build())
+                    return SearchUserDTO.builder()
+                            .username(user.getUsername())
+                            .fullName(user.getFullName())
+                            .avatarUrl(user.getAvatarUrl())
+                            .isFollowing(followService.isFollowing(currentId, user.getId()))
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public List<SearchUserDTO> getRandomUsers(Long currentUserId, Pageable pageable) {
         return userRepository.findRandomUsers(currentUserId, pageable)
                 .stream()
@@ -252,6 +223,7 @@ public class UserService {
                         .username(user.getUsername())
                         .fullName(user.getFullName())
                         .avatarUrl(user.getAvatarUrl())
+                        .isFollowing(false) // Luôn là false vì SQL đã lọc bỏ người đã follow
                         .build())
                 .collect(Collectors.toList());
     }

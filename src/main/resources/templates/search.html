@@ -37,86 +37,129 @@
 </div>
 
 <script>
-    const searchInput = document.getElementById('search-input');
-    const resultsContainer = document.getElementById('search-results');
-    const spinner = document.getElementById('loading-spinner');
-
     let currentPage = 0;
-    let currentKeyword = '';
+    let currentKeyword = "";
     let isLoading = false;
 
-    window.onload = () => fetchUsers(true);
+    const searchInput = document.getElementById('search-input');
+    const userListContainer = document.getElementById('search-results');
+    const spinner = document.getElementById('loading-spinner');
 
+    // Lắng nghe sự kiện gõ phím tìm kiếm (Debounce 300ms)
+    let timeout = null;
     searchInput.addEventListener('input', (e) => {
-        currentKeyword = e.target.value;
-        currentPage = 0;
-        fetchUsers(true);
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            currentKeyword = e.target.value;
+            currentPage = 0; // Reset trang về 0 khi gõ từ khóa mới
+            fetchUsers(true);
+        }, 300);
     });
 
-    async function fetchUsers(isReset = false) {
+    // Hàm gọi API lấy danh sách User
+    async function fetchUsers(isNewSearch = false) {
         if (isLoading) return;
         isLoading = true;
-
-        // Hiện spinner khi đang load
         spinner.classList.remove('hidden');
+
+        if (isNewSearch) {
+            userListContainer.innerHTML = "";
+        }
 
         try {
             const response = await fetch(`/search/users?keyword=${encodeURIComponent(currentKeyword)}&page=${currentPage}`);
             const users = await response.json();
 
-            if (isReset) {
-                resultsContainer.innerHTML = '';
-                // Thêm tiêu đề phân loại
-                const title = document.createElement('h3');
-                title.className = "text-sm font-bold text-gray-400 uppercase tracking-wider mb-4";
-                title.innerText = currentKeyword.trim() === '' ? 'Gợi ý cho bạn' : 'Kết quả tìm kiếm';
-                resultsContainer.appendChild(title);
-            }
-
-            if (users.length === 0 && isReset) {
-                resultsContainer.innerHTML += `
-                    <div class="text-center py-20 animate-in fade-in">
-                        <i class="fa-regular fa-face-frown text-4xl text-gray-300 mb-3"></i>
-                        <p class="text-gray-400 text-sm font-medium">Không tìm thấy tài khoản nào.</p>
-                    </div>`;
+            if (users.length === 0 && isNewSearch) {
+                userListContainer.innerHTML = `<p class="text-center text-gray-400 text-sm mt-10">Không tìm thấy người dùng phù hợp.</p>`;
                 spinner.classList.add('hidden');
                 isLoading = false;
                 return;
             }
 
             users.forEach(user => {
-                resultsContainer.innerHTML += `
-                    <div class="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <div class="flex items-center space-x-3">
+                // ĐÃ SỬA LỖI: Đổi từ user.isFollowing sang user.following để khớp với định dạng JSON nhận về từ Backend
+                const btnText = user.following ? 'Hủy theo dõi' : 'Theo dõi';
+                const btnClass = user.following
+                    ? 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white';
+
+                const userCard = `
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center space-x-4 cursor-pointer" onclick="window.location.href='/profile/${user.username}'">
                             <div class="relative">
                                 <img src="${user.avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
                                      class="w-12 h-12 rounded-full object-cover border border-gray-100">
                                 <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-gray-900 text-sm hover:underline cursor-pointer">${user.username}</span>
+                                <span class="font-bold text-gray-900 text-sm hover:underline">${user.username}</span>
                                 <span class="text-xs text-gray-500 truncate max-w-[150px]">${user.fullName || 'Người dùng mới'}</span>
                             </div>
                         </div>
-                        <a href="/profile/${user.username}"
-                           class="px-4 py-1.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-lg transition">
-                            Xem
-                        </a>
+
+                        <div class="flex items-center space-x-2">
+                            <button onclick="toggleFollowInSearch(this, '${user.username}')"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg transition ${btnClass}">
+                                ${btnText}
+                            </button>
+
+                            <a href="/profile/${user.username}"
+                               class="px-3 py-1.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-lg transition">
+                                Xem
+                            </a>
+                        </div>
                     </div>`;
+                userListContainer.insertAdjacentHTML('beforeend', userCard);
             });
 
-            if(users.length > 0) currentPage++;
-        } catch (err) { console.error('Lỗi tải dữ liệu:', err); }
+            if (users.length > 0) currentPage++;
+        } catch (err) {
+            console.error('Lỗi tải dữ liệu tìm kiếm:', err);
+        }
 
         isLoading = false;
         spinner.classList.add('hidden');
     }
 
+    // Hàm gọi xử lý bấm nút Follow/Unfollow ngay tại trang tìm kiếm
+    async function toggleFollowInSearch(button, username) {
+        button.disabled = true;
+        try {
+            const response = await fetch(`/profile/${username}/follow`, { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                // Đoạn này giữ nguyên là data.isFollowing vì map thủ công từ backend trả về key này nguyên bản
+                if (data.isFollowing) {
+                    button.innerText = 'Hủy theo dõi';
+                    button.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition bg-gray-200 hover:bg-gray-300 text-gray-800";
+                } else {
+                    button.innerText = 'Theo dõi';
+                    button.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition bg-blue-500 hover:bg-blue-600 text-white";
+                }
+            } else {
+                alert(data.message || "Có lỗi xảy ra");
+            }
+        } catch (err) {
+            console.error("Lỗi khi thay đổi trạng thái theo dõi:", err);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    // Cuộn vô hạn (Infinite Scroll)
     const mainContainer = document.querySelector('main');
     mainContainer.addEventListener('scroll', () => {
         if ((mainContainer.scrollTop + mainContainer.clientHeight) >= mainContainer.scrollHeight - 100 && !isLoading) {
             fetchUsers(false);
         }
     });
-</script></body>
+
+    // Tự động kích hoạt tải danh sách gợi ý ngẫu nhiên ngay khi vừa vào trang tìm kiếm lần đầu
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchUsers(true);
+    });
+</script>
+</body>
 </html>
