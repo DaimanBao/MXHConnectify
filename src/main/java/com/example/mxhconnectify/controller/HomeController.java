@@ -6,6 +6,7 @@ import com.example.mxhconnectify.entity.Post;
 import com.example.mxhconnectify.entity.User;
 import com.example.mxhconnectify.service.LikeService;
 import com.example.mxhconnectify.service.PostService;
+import com.example.mxhconnectify.service.SavedPostService;
 import com.example.mxhconnectify.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -28,12 +29,14 @@ public class HomeController {
     private final PostService postService;
     private final UserService userService;
     private final LikeService likeService;
+    private final SavedPostService savedPostService;
 
     @Autowired
-    public HomeController(PostService postService,  UserService userService,  LikeService likeService) {
+    public HomeController(PostService postService,  UserService userService,  LikeService likeService,  SavedPostService savedPostService) {
         this.postService = postService;
         this.userService = userService;
         this.likeService = likeService;
+        this.savedPostService = savedPostService;
     }
 
     @GetMapping
@@ -51,6 +54,7 @@ public class HomeController {
         int pageSize = 20;
         Page<Post> postPage = postService.getHomeFeed(currentUser, page, pageSize);
         likeService.setLikeStatusForPosts(postPage.getContent(), currentUser);
+        savedPostService.setSaveStatusForPosts(postPage.getContent(), currentUser);
 
         model.addAttribute("posts", postPage.getContent());
         model.addAttribute("currentPage", page);

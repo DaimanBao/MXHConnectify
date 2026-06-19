@@ -128,7 +128,14 @@
                                     </button>
                                     <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
                                 </div>
-                                <button class="text-xl hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-bookmark"></i></button>
+                                <button th:if="${post.user.id != session.currentUser.id}"
+                                        th:data-post-id="${post.id}"
+                                        onclick="toggleSavePost(this, this.getAttribute('data-post-id'))"
+                                        class="text-xl hover:scale-110 transition duration-200 text-gray-700">
+                                    <i th:class="${post.isSavedByCurrentUser} ? 'fa-solid fa-bookmark text-black' : 'fa-regular fa-bookmark'"></i>
+                                </button>
+
+                                <div th:if="${post.user.id == session.currentUser.id}" class="w-5 h-5"></div>
                             </div>
 
                             <p th:id="'like-count-' + ${post.id}"
@@ -294,6 +301,34 @@
         console.error("Lỗi gửi tương tác Like bài viết:", err);
     } finally {
         // Mở khóa nút sau khi xử lý xong
+        button.disabled = false;
+    }
+}
+
+    async function toggleSavePost(button, postId) {
+    const bookmarkIcon = button.querySelector('i');
+
+    // Khóa nút tạm thời tránh spam click liên tục
+    button.disabled = true;
+
+    try {
+        const response = await fetch(`/api/posts/${postId}/save`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.saved) {
+                // Đổi thành icon bookmark đã lưu (đầy màu đen)
+                bookmarkIcon.className = "fa-solid fa-bookmark text-black animate-scale-up";
+            } else {
+                // Trở về icon bookmark trống
+                bookmarkIcon.className = "fa-regular fa-bookmark";
+            }
+        } else {
+            alert(data.message || "Không thể thực hiện hành động lưu bài viết.");
+        }
+    } catch (err) {
+        console.error("Lỗi gửi tương tác lưu bài viết:", err);
+    } finally {
         button.disabled = false;
     }
 }

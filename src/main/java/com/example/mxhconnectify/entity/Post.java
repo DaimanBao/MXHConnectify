@@ -47,7 +47,10 @@ public class Post {
     private LocalDateTime updatedAt;
 
     @Transient
-    private boolean isLikedByCurrentUser = false; // Biến tạm hỗ trợ hiển thị giao diện, không tạo cột trong DB
+    private boolean isLikedByCurrentUser = false; // Biến tạm hỗ trợ hiển thị UI lịke post, không lưu trong DB
+
+    @Transient
+    private boolean isSavedByCurrentUser = false; // Biến tạm phục vụ lưu UI lưu bài viết, không lưu DB
 
     // Quan hệ 1-N với Media
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
