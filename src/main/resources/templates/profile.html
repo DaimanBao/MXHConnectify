@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Hiệu ứng trượt vào từ bên phải */
+        /* Hiệu ứng trượt vào từ bên phải cho thông báo Toast */
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -15,12 +15,20 @@
         .animate-slide-in {
             animation: slideIn 0.4s ease-out forwards;
         }
+        /* Hiệu ứng zoom nhẹ cho icon tim khi tương tác */
+        @keyframes scaleUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .animate-scale-up {
+            animation: scaleUp 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased">
 
 <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-3">
-
     <div id="success-toast" th:if="${successMessage}"
          class="bg-white border-l-4 border-green-500 shadow-lg p-4 rounded-lg flex items-center space-x-3 animate-slide-in">
         <i class="fa-solid fa-circle-check text-green-500"></i>
@@ -40,17 +48,15 @@
     <div th:replace="~{modals/edit-profile-modal :: editProfileModal}"></div>
     <div th:replace="~{modals/avatar-modal :: avatarModal}"></div>
 
-
     <main class="flex-1 pl-20 xl:pl-64 overflow-y-auto h-full flex justify-center">
         <div class="w-full max-w-[935px] pt-8 px-4 pb-12">
+
             <header class="grid grid-cols-3 gap-4 md:gap-10 pb-10 border-b border-gray-200 items-center">
                 <div class="flex justify-center">
                     <div class="w-20 h-20 md:w-36 md:h-36 rounded-full p-[3px] bg-gray-200 cursor-pointer relative group"
                          onclick="openAvatarModal()">
-
                         <img th:src="${user.avatarUrl != null ? (user.avatarUrl + '?t=' + #dates.createNow().getTime()) : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
                              class="w-full h-full rounded-full object-cover border-4 border-white">
-
                         <div class="absolute inset-0 bg-black/40 rounded-full hidden group-hover:flex items-center justify-center text-white text-xs font-semibold">
                             <i class="fa-solid fa-camera text-xl"></i>
                         </div>
@@ -59,11 +65,21 @@
 
                 <div class="col-span-2 space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
-                        <h2 class="text-xl font-light tracking-wide" th:text="${user.username}">bao_software</h2>
+                        <h2 class="text-xl font-light tracking-wide" th:text="${user.username}">username</h2>
                         <div class="flex space-x-2">
                             <button th:if="${isOwner}" onclick="openEditModal()" class="bg-gray-100 hover:bg-gray-200 text-black text-sm font-semibold px-4 py-1.5 rounded-lg transition duration-200">
                                 Chỉnh sửa trang cá nhân
                             </button>
+
+                            <div th:if="${!isOwner}" id="follow-btn-container">
+                                <button th:if="${isFollowing}" onclick="handleFollowToggle()" class="bg-gray-200 hover:bg-gray-300 text-black text-sm font-semibold px-6 py-1.5 rounded-lg transition duration-200">
+                                    Đang theo dõi
+                                </button>
+                                <button th:if="${!isFollowing}" onclick="handleFollowToggle()" class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-6 py-1.5 rounded-lg transition duration-200">
+                                    Theo dõi
+                                </button>
+                            </div>
+
                             <button class="bg-gray-100 hover:bg-gray-200 text-black text-sm p-1.5 rounded-lg transition duration-200">
                                 <i class="fa-solid fa-gear"></i>
                             </button>
@@ -71,15 +87,15 @@
                     </div>
 
                     <ul class="hidden sm:flex space-x-10 text-sm">
-                        <li><span class="font-semibold">6</span> bài viết</li>
-                        <li class="cursor-pointer"><span class="font-semibold">450</span> người theo dõi</li>
-                        <li class="cursor-pointer"><span class="font-semibold">185</span> đang theo dõi</li>
+                        <li><span class="font-semibold" th:text="${postCount}">0</span> bài viết</li>
+                        <li><span id="follower-count-pc" class="font-semibold" th:text="${followerCount}">0</span> người theo dõi</li>
+                        <li><span class="font-semibold" th:text="${followingCount}">0</span> đang theo dõi</li>
                     </ul>
 
                     <div class="text-sm space-y-1">
-                        <h1 class="font-semibold" th:text="${user.fullName}">Nguyễn Văn Bảo</h1>
-                        <p class="text-gray-500 text-xs" th:text="${user.headline} ?: 'Chưa có mô tả nào ở Head Line.'">Kỹ sư Phần mềm • Đại học Quy Nhơn 🎓</p>
-                        <p class="text-gray-700" th:text="${user.description} ?: 'Chưa có mô tả nào ở Description.'">Xây dựng mọi thứ bằng Spring Boot & Java 💻☕. Chào mừng tới Instagram Mini!</p>
+                        <h1 class="font-semibold" th:text="${user.fullName}">Họ và Tên</h1>
+                        <p class="text-gray-500 text-xs" th:text="${user.headline} ?: 'Chưa có mô tả nào ở Head Line.'">Headline</p>
+                        <p class="text-gray-700" th:text="${user.description} ?: 'Chưa có mô tả nào ở Description.'">Description</p>
                         <div th:if="${not #lists.isEmpty(user.communityLinksList)}">
                             <p class="text-xs font-semibold mb-1">Liên kết của tôi:</p>
                             <a th:each="link : ${user.communityLinksList}"
@@ -94,106 +110,329 @@
             </header>
 
             <ul class="flex sm:hidden justify-around border-b border-gray-200 py-3 text-center text-xs text-gray-500 bg-white">
-                <li><strong class="block text-gray-900 font-semibold">6</strong> bài viết</li>
-                <li><strong class="block text-gray-900 font-semibold">450</strong> người theo dõi</li>
-                <li><strong class="block text-gray-900 font-semibold">185</strong> đang theo dõi</li>
+                <li><strong class="block text-gray-900 font-semibold" th:text="${postCount}">0</strong> bài viết</li>
+                <li><strong id="follower-count-mb" class="block text-gray-900 font-semibold" th:text="${followerCount}">0</strong> người theo dõi</li>
+                <li><strong class="block text-gray-900 font-semibold" th:text="${followingCount}">0</strong> đang theo dõi</li>
             </ul>
 
-            <div class="flex justify-center space-x-12 border-t border-transparent text-xs uppercase tracking-widest font-semibold select-none">
-                <div class="border-t border-black text-black py-4 flex items-center space-x-1.5 cursor-pointer">
+            <div class="flex justify-center space-x-12 border-t border-gray-200 text-xs uppercase tracking-widest font-semibold select-none">
+                <button id="tab-posts-btn" onclick="switchProfileTab('posts')"
+                        class="border-t-2 border-black text-black py-4 flex items-center space-x-1.5 focus:outline-none transition duration-150">
                     <i class="fa-solid fa-table-cells text-[10px]"></i>
                     <span>Bài viết</span>
-                </div>
-                <div class="text-gray-400 py-4 flex items-center space-x-1.5 cursor-pointer hover:text-black">
+                </button>
+                <button th:if="${isOwner}" id="tab-saved-btn" onclick="switchProfileTab('saved')"
+                        class="border-t-2 border-transparent text-gray-400 py-4 flex items-center space-x-1.5 hover:text-black focus:outline-none transition duration-150">
                     <i class="fa-regular fa-bookmark text-[10px]"></i>
                     <span>Đã lưu</span>
-                </div>
+                </button>
             </div>
 
-            <div class="grid grid-cols-3 gap-1 md:gap-7">
-                <div class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
-                    <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200">
-                        <span><i class="fa-solid fa-heart mr-2"></i>124</span>
-                        <span><i class="fa-solid fa-comment mr-2"></i>18</span>
-                    </div>
-                </div>
-                <div class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
-                    <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200">
-                        <span><i class="fa-solid fa-heart mr-2"></i>98</span>
-                        <span><i class="fa-solid fa-comment mr-2"></i>5</span>
-                    </div>
-                </div>
-                <div class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
-                    <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=500" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200">
-                        <span><i class="fa-solid fa-heart mr-2"></i>210</span>
-                        <span><i class="fa-solid fa-comment mr-2"></i>32</span>
-                    </div>
-                </div>
-                <div class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
-                    <img src="https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=500" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200">
-                        <span><i class="fa-solid fa-heart mr-2"></i>85</span>
-                        <span><i class="fa-solid fa-comment mr-2"></i>2</span>
-                    </div>
-                </div>
-                <div class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
-                    <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=500" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200">
-                        <span><i class="fa-solid fa-heart mr-2"></i>156</span>
-                        <span><i class="fa-solid fa-comment mr-2"></i>14</span>
-                    </div>
-                </div>
-                <div class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
-                    <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=500" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200">
-                        <span><i class="fa-solid fa-heart mr-2"></i>322</span>
-                        <span><i class="fa-solid fa-comment mr-2"></i>41保存</span>
-                    </div>
-                </div>
-            </div>
+            <div class="mt-4">
 
+                <div id="profile-posts-container" class="grid grid-cols-3 gap-1 md:gap-7">
+                    <div th:each="post : ${posts}" class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
+                        <div class="absolute inset-0 z-10"
+                             onclick="openPostDetailModal(this)"
+                             th:data-post-id="${post.id}"
+                             th:data-post-content="${post.content}"
+                             th:data-post-like-count="${post.likeCount != null ? post.likeCount : 0}"
+                             th:data-post-is-liked="${post.isLikedByCurrentUser}"
+                             th:data-post-is-saved="${post.isSavedByCurrentUser}"
+                             th:data-post-date="${post.createdAt}"
+                             th:data-user-id="${post.user.id}"
+                             th:data-user-username="${post.user.username}"
+                             th:data-user-avatar="${post.user.avatarUrl != null && !post.user.avatarUrl.isEmpty() ? post.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}">
+
+                            <input type="hidden" class="media-item-data" th:each="m : ${post.mediaList}" th:data-id="${m.id}" th:data-type="${m.type}" th:data-url="${m.url}" />
+                        </div>
+
+                        <img th:src="${post.mediaList != null && !post.mediaList.isEmpty() ? post.mediaList[0].url : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500'}"
+                             class="w-full h-full object-cover transition duration-300 group-hover:scale-105">
+
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200 pointer-events-none z-20">
+                            <span><i class="fa-solid fa-heart mr-2"></i><span th:text="${post.likeCount != null ? post.likeCount : 0}">0</span></span>
+                            <span><i class="fa-solid fa-comment mr-2"></i><span th:text="${post.commentCount != null ? post.commentCount : 0}">0</span></span>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(posts)}" class="col-span-3 text-center py-20 text-gray-400 select-none">
+                        <div class="w-16 h-16 mx-auto border-2 border-gray-400 rounded-full flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-camera text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-800">Chưa có bài viết nào</p>
+                    </div>
+                </div>
+
+                <div th:if="${isOwner}" id="profile-saved-container" class="grid grid-cols-3 gap-1 md:gap-7 hidden">
+                    <div th:each="post : ${savedPosts}" class="relative aspect-square bg-gray-200 group overflow-hidden cursor-pointer rounded">
+                        <div class="absolute inset-0 z-10"
+                             onclick="openPostDetailModal(this)"
+                             th:data-post-id="${post.id}"
+                             th:data-post-content="${post.content}"
+                             th:data-post-like-count="${post.likeCount != null ? post.likeCount : 0}"
+                             th:data-post-is-liked="${post.isLikedByCurrentUser}"
+                             th:data-post-is-saved="${post.isSavedByCurrentUser}"
+                             th:data-post-date="${post.createdAt}"
+                             th:data-user-id="${post.user.id}"
+                             th:data-user-username="${post.user.username}"
+                             th:data-user-avatar="${post.user.avatarUrl != null && !post.user.avatarUrl.isEmpty() ? post.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}">
+
+                            <input type="hidden" class="media-item-data" th:each="m : ${post.mediaList}" th:data-id="${m.id}" th:data-type="${m.type}" th:data-url="${m.url}" />
+                        </div>
+
+                        <img th:src="${post.mediaList != null && !post.mediaList.isEmpty() ? post.mediaList[0].url : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500'}"
+                             class="w-full h-full object-cover transition duration-300 group-hover:scale-105">
+
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-6 text-white font-bold transition duration-200 pointer-events-none z-20">
+                            <span><i class="fa-solid fa-heart mr-2"></i><span th:text="${post.likeCount != null ? post.likeCount : 0}">0</span></span>
+                            <span><i class="fa-solid fa-comment mr-2"></i><span th:text="${post.commentCount != null ? post.commentCount : 0}">0</span></span>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(savedPosts)}" class="col-span-3 text-center py-20 text-gray-400 select-none">
+                        <div class="w-16 h-16 mx-auto border-2 border-gray-400 rounded-full flex items-center justify-center mb-3">
+                            <i class="fa-regular fa-bookmark text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-800">Chưa lưu bài viết nào</p>
+                        <p class="text-xs text-gray-400 mt-1">Khi bạn lưu bài viết, chúng sẽ xuất hiện tại đây.</p>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </main>
 </div>
 
+<div th:replace="~{modals/post-detail-modal :: postDetailModal}"></div>
 
 <script th:inline="javascript">
-    // Khởi tạo mảng lưu trữ danh sách link liên kết
+    // Biến toàn cục phục vụ điều khiển Slide phương tiện bên trong Modal bài viết
+    let currentModalMediaList = [];
+    let currentModalMediaIndex = 0;
+
+    // Hàm điều khiển chuyển đổi hiển thị mượt mà qua lại giữa 2 Tab
+    function switchProfileTab(tabName) {
+        const postsContainer = document.getElementById('profile-posts-container');
+        const savedContainer = document.getElementById('profile-saved-container');
+        const postsBtn = document.getElementById('tab-posts-btn');
+        const savedBtn = document.getElementById('tab-saved-btn');
+
+        if (tabName === 'posts') {
+            postsContainer.classList.remove('hidden');
+            if (savedContainer) savedContainer.classList.add('hidden');
+
+            postsBtn.className = "border-t-2 border-black text-black py-4 flex items-center space-x-1.5 focus:outline-none transition duration-150";
+            if (savedBtn) savedBtn.className = "border-t-2 border-transparent text-gray-400 py-4 flex items-center space-x-1.5 hover:text-black focus:outline-none transition duration-150";
+        } else if (tabName === 'saved') {
+            postsContainer.classList.add('hidden');
+            if (savedContainer) savedContainer.classList.remove('hidden');
+
+            postsBtn.className = "border-t-2 border-transparent text-gray-400 py-4 flex items-center space-x-1.5 hover:text-black focus:outline-none transition duration-150";
+            if (savedBtn) savedBtn.className = "border-t-2 border-black text-black py-4 flex items-center space-x-1.5 focus:outline-none transition duration-150";
+        }
+    }
+
+    // ĐÃ SỬA ĐỒNG BỘ: Hàm mở Post Detail Modal truyền dữ liệu lên duy nhất 1 khối Header lớn
+    function openPostDetailModal(element) {
+        const postId = element.getAttribute('data-post-id');
+        const content = element.getAttribute('data-post-content') || '';
+        const likeCount = element.getAttribute('data-post-like-count');
+        const isLiked = element.getAttribute('data-post-is-liked') === 'true';
+        const isSaved = element.getAttribute('data-post-is-saved') === 'true';
+        const postDate = element.getAttribute('data-post-date');
+        const username = element.getAttribute('data-user-username');
+        const avatarUrl = element.getAttribute('data-user-avatar');
+
+        // Bóc mảng MediaList ẩn bên trong thẻ
+        currentModalMediaList = [];
+        element.querySelectorAll('.media-item-data').forEach(input => {
+            currentModalMediaList.push({
+                type: input.getAttribute('data-type'),
+                url: input.getAttribute('data-url')
+            });
+        });
+        currentModalMediaIndex = 0;
+
+        // Điền dữ liệu vào duy nhất khối Header Lớn (đã bỏ các ID caption thừa gây lỗi)
+        const modalUserAvatar = document.getElementById('modal-user-avatar');
+        if (modalUserAvatar) modalUserAvatar.src = avatarUrl;
+
+        const modalUserUsername = document.getElementById('modal-user-username');
+        if (modalUserUsername) modalUserUsername.innerText = username;
+
+        const modalPostContent = document.getElementById('modal-post-content');
+        if (modalPostContent) modalPostContent.innerText = content;
+
+        const modalLikeCount = document.getElementById('modal-like-count');
+        if (modalLikeCount) modalLikeCount.innerText = `${likeCount} lượt thích`;
+
+        const modalPostDate = document.getElementById('modal-post-date');
+        if (modalPostDate && postDate) {
+            try {
+                const dateObj = new Date(postDate);
+                modalPostDate.innerText = dateObj.toLocaleDateString('vi-VN');
+            } catch(e) {
+                modalPostDate.innerText = postDate;
+            }
+        }
+
+        // Cài đặt nút LIKE AJAX
+        const likeBtn = document.getElementById('modal-like-btn');
+        if (likeBtn) {
+            likeBtn.setAttribute('onclick', `toggleLikeInModal(this, '${postId}')`);
+            likeBtn.querySelector('i').className = isLiked ? "fa-solid fa-heart text-red-500" : "fa-regular fa-heart";
+        }
+
+        // Cài đặt nút SAVE AJAX
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) {
+            const isProfileOwner = [[${isOwner}]];
+            if (element.closest('#profile-posts-container') && isProfileOwner) {
+                saveBtn.classList.add('hidden');
+            } else {
+                saveBtn.classList.remove('hidden');
+                saveBtn.setAttribute('onclick', `toggleSaveInModal(this, '${postId}')`);
+                saveBtn.querySelector('i').className = isSaved ? "fa-solid fa-bookmark text-black" : "fa-regular fa-bookmark";
+            }
+        }
+
+        // Gọi AJAX để load bình luận từ server đổ vào vùng cuộn mượt
+        if (typeof loadModalComments === 'function') {
+            loadModalComments(postId);
+        }
+
+        // Tiến hành dựng hiển thị Slide Media bên cột trái
+        renderModalMedia();
+
+        // Mở Modal kèm hiệu ứng mượt mà
+        const modal = document.getElementById('post-detail-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                const innerDiv = modal.querySelector('div');
+                if (innerDiv) innerDiv.classList.remove('scale-95');
+            }, 50);
+        }
+    }
+
+    // Hàm dựng và trình chiếu Media (Ảnh/Video) bên trái Modal bài đăng
+    function renderModalMedia() {
+        const container = document.getElementById('modal-media-container');
+        const prevBtn = document.getElementById('modal-media-prev');
+        const nextBtn = document.getElementById('modal-media-next');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (currentModalMediaList.length === 0) {
+            container.innerHTML = `<img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500" class="w-full h-full object-cover">`;
+            if (prevBtn) prevBtn.classList.add('hidden');
+            if (nextBtn) nextBtn.classList.add('hidden');
+            return;
+        }
+
+        const media = currentModalMediaList[currentModalMediaIndex];
+        if (media.type === 'VIDEO') {
+            container.innerHTML = `<video src="${media.url}" controls autoplay loop class="w-full h-full object-contain"></video>`;
+        } else {
+            container.innerHTML = `<img src="${media.url}" class="w-full h-full object-contain">`;
+        }
+
+        // Xử lý ẩn/hiện nút điều hướng mũi tên Slide
+        if (prevBtn) {
+            if (currentModalMediaIndex > 0) prevBtn.classList.remove('hidden');
+            else prevBtn.classList.add('hidden');
+        }
+
+        if (nextBtn) {
+            if (currentModalMediaIndex < currentModalMediaList.length - 1) nextBtn.classList.remove('hidden');
+            else nextBtn.classList.add('hidden');
+        }
+
+        if (prevBtn) {
+            prevBtn.onclick = (e) => { e.stopPropagation(); if(currentModalMediaIndex > 0) { currentModalMediaIndex--; renderModalMedia(); } };
+        }
+        if (nextBtn) {
+            nextBtn.onclick = (e) => { e.stopPropagation(); if(currentModalMediaIndex < currentModalMediaList.length - 1) { currentModalMediaIndex++; renderModalMedia(); } };
+        }
+    }
+
+    // Hàm đóng Modal chi tiết bài viết và dọn sạch vùng media (tránh nhạc video chạy ngầm)
+    function closePostDetailModal() {
+        const modal = document.getElementById('post-detail-modal');
+        if (!modal) return;
+        modal.classList.add('opacity-0');
+        const innerDiv = modal.querySelector('div');
+        if (innerDiv) innerDiv.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            const container = document.getElementById('modal-media-container');
+            if (container) container.innerHTML = '';
+        }, 300);
+    }
+
+    // Gọi API Like AJAX từ Modal và reload trang để đồng bộ chỉ số ngoài màn hình nền
+    async function toggleLikeInModal(button, postId) {
+        const heartIcon = button.querySelector('i');
+        const likeCountTxt = document.getElementById('modal-like-count');
+        button.disabled = true;
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                heartIcon.className = data.liked ? "fa-solid fa-heart text-red-500 animate-scale-up" : "fa-regular fa-heart";
+                if (likeCountTxt) likeCountTxt.innerText = `${data.likeCount} lượt thích`;
+
+                setTimeout(() => { window.location.reload(); }, 500);
+            }
+        } catch (e) { console.error("Lỗi tương tác Like tại Modal:", e); }
+        finally { button.disabled = false; }
+    }
+
+    // Gọi API Save AJAX từ Modal
+    async function toggleSaveInModal(button, postId) {
+        const bookmarkIcon = button.querySelector('i');
+        button.disabled = true;
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/save`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                bookmarkIcon.className = data.saved ? "fa-solid fa-bookmark text-black animate-scale-up" : "fa-regular fa-bookmark";
+                setTimeout(() => { window.location.reload(); }, 500);
+            } else {
+                alert(data.message);
+            }
+        } catch (e) { console.error("Lỗi tương tác Save tại Modal:", e); }
+        finally { button.disabled = false; }
+    }
+
+    // -------------------------------------------------------------
+    // LOGIC CODE CŨ QUẢN LÝ FORM CHỈNH SỬA, AVATAR VÀ FOLLOW (GIỮ NGUYÊN 100%)
+    // -------------------------------------------------------------
     let linksArray = [];
 
-    // HÀM MỞ MODAL: Mỗi lần mở lên sẽ tự lấy data gốc từ DB nạp vào giao diện hàng link
     function openEditModal() {
-        // Lấy chuỗi link gốc trực tiếp từ đối tượng user của Thymeleaf
         let initialLinksStr = [[${user.communityLinks}]] || "";
-
-        // Cắt chuỗi thành mảng các link sạch sẽ
         linksArray = initialLinksStr ? initialLinksStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
-
-        // Hiển thị Modal
         document.getElementById('editProfileModal').classList.remove('hidden');
-
-        // Vẽ các hàng link hiện có lên màn hình
         renderLinks();
     }
 
-    // HÀM ĐÓNG MODAL
     function closeEditModal() {
         document.getElementById('editProfileModal').classList.add('hidden');
     }
 
-    // Hàm vẽ danh sách các hàng link kèm nút xóa (x)
     function renderLinks() {
         const container = document.getElementById('linksContainer');
         if (!container) return;
-        container.innerHTML = ''; // Xóa sạch khung chứa trước khi vẽ lại
+        container.innerHTML = '';
 
         linksArray.forEach((link, index) => {
             const linkRow = document.createElement('div');
             linkRow.className = "flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 text-xs text-blue-900 font-medium";
-
             linkRow.innerHTML = `
                 <div class="flex items-center space-x-2 truncate">
                     <i class="fa-solid fa-link text-blue-400 text-[10px]"></i>
@@ -207,49 +446,68 @@
         });
     }
 
-    // Hàm xử lý khi người dùng nhập thêm link mới và bấm "Thêm"
     function addLinkFromInput() {
         const input = document.getElementById('linkInput');
         const value = input.value.trim();
-
         if (value !== "") {
             if(!linksArray.includes(value)) {
                 linksArray.push(value);
                 renderLinks();
             }
-            input.value = ""; // Clear ô nhập sau khi thêm thành công
+            input.value = "";
         }
     }
 
-    // Hàm xóa nhanh 1 hàng link khi nhấn dấu X
     function removeLink(index) {
         linksArray.splice(index, 1);
-        renderLinks(); // Cập nhật lại giao diện ngay lập tức
+        renderLinks();
     }
 
-    // Hàm gom mảng lại thành chuỗi phân tách bởi dấu phẩy trước khi nhấn nút Submit Form gửi lên Server
     function prepareSubmitData() {
         document.getElementById('finalLinksInput').value = linksArray.join(',');
     }
 
-    // Tự động ẩn thông báo sau 3 giây
     document.addEventListener("DOMContentLoaded", function() {
         const toasts = document.querySelectorAll('#success-toast, #error-toast');
         toasts.forEach(toast => {
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => toast.remove(), 500); // Xóa khỏi DOM sau khi ẩn
-            }, 3000); // 3000ms = 3 giây
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
         });
     });
 
-    function openAvatarModal() {
-    document.getElementById('avatarModal').classList.remove('hidden');
-    }
+    function openAvatarModal() { document.getElementById('avatarModal').classList.remove('hidden'); }
+    function closeAvatarModal() { document.getElementById('avatarModal').classList.add('hidden'); }
 
-    function closeAvatarModal() {
-    document.getElementById('avatarModal').classList.add('hidden');
+    function handleFollowToggle() {
+        const username = [[${user.username}]];
+        fetch(`/profile/${username}/follow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+            if (response.status === 401) {
+                alert("Vui lòng đăng nhập để thực hiện tính năng này!");
+                window.location.href = "/login";
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.success) {
+                const container = document.getElementById('follow-btn-container');
+                if (data.isFollowing) {
+                    container.innerHTML = `<button onclick=\"handleFollowToggle()\" class=\"bg-gray-200 hover:bg-gray-300 text-black text-sm font-semibold px-6 py-1.5 rounded-lg transition duration-200\">Đang theo dõi</button>`;
+                } else {
+                    container.innerHTML = `<button onclick=\"handleFollowToggle()\" class=\"bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-6 py-1.5 rounded-lg transition duration-200\">Theo dõi</button>`;
+                }
+                if(document.getElementById('follower-count-pc')) document.getElementById('follower-count-pc').innerText = data.followerCount;
+                if(document.getElementById('follower-count-mb')) document.getElementById('follower-count-mb').innerText = data.followerCount;
+            }
+        })
+        .catch(error => console.error("Lỗi hệ thống đồng bộ tính năng Follow:", error));
     }
 </script>
 </body>

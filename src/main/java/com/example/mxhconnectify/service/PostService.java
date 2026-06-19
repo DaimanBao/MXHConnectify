@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,6 +80,56 @@ public class PostService {
 
     public Page<Post> getHomeFeed(User currentUser, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return postRepository.findHomeFeed(currentUser.getId(), pageable);
+        Page<Post> homeFeed = postRepository.findHomeFeed(currentUser.getId(), pageable);
+
+        // VỚI MỖI BÀI VIẾT TRÊN NEWFEED: Quét tìm bình luận tiêu biểu có nhiều like nhất
+        attachFeaturedComments(homeFeed);
+
+        return homeFeed;
+    }
+
+    /**
+     * Lấy danh sách bài viết cho trang KHÁM PHÁ: chỉ lấy post của những người
+     * mà currentUser CHƯA theo dõi (và không phải chính mình).
+     */
+    public Page<Post> getExploreFeed(User currentUser, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Post> exploreFeed = postRepository.findExploreFeed(currentUser.getId(), pageable);
+
+        // Tương tự Home Feed: gắn bình luận tiêu biểu (nhiều like nhất) cho mỗi bài viết
+        attachFeaturedComments(exploreFeed);
+
+        return exploreFeed;
+    }
+
+    /**
+     * Hàm bổ trợ: quét và gắn bình luận có nhiều like nhất cho từng bài viết trong 1 trang kết quả.
+     */
+    private void attachFeaturedComments(Page<Post> postPage) {
+        if (postPage != null && postPage.hasContent()) {
+            postPage.getContent().forEach(post -> {
+                postRepository.findTopFeaturedCommentByPostId(post.getId())
+                        .ifPresent(comment -> post.setFeaturedComment(comment));
+            });
+        }
+    }
+
+    public Optional<Post> findById(Long id) {
+        return postRepository.findById(id);
+    }
+
+    public long getPostCountByUserId(Long userId) {
+        if (userId == null) return 0;
+
+        return postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE);
+    }
+
+    public List<Post> getUserPosts(Long userId) {
+        if (userId == null) {
+            return List.of(); // Trả về danh sách rỗng nếu userId truyền vào bị rỗng
+        }
+
+        // Gọi xuống Repository để lấy danh sách bài viết đang hoạt động (ENABLE)
+        return postRepository.findByUser_IdAndParentIdIsNullAndStatusOrderByCreatedAtDesc(userId, PostStatus.ENABLE);
     }
 }

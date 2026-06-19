@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khám phá - Instagram Mini</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Tùy chỉnh thanh cuộn tinh tế cho bảng tin */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #dbdbdb; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+
+<div class="flex h-screen overflow-hidden">
+
+  <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+  <main class="flex-1 pl-20 xl:pl-64 flex justify-center overflow-y-auto h-full">
+    <div class="w-full max-w-[935px] grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 px-4">
+
+      <section class="lg:col-span-2 space-y-6 max-w-[470px] mx-auto w-full pb-12">
+
+        <!-- Đã bỏ thanh story ngang (followingUsers) so với home, trang khám phá không cần -->
+
+        <div class="space-y-6">
+
+          <div th:each="post : ${posts}" class="bg-white border border-gray-200 rounded-xl mb-6 shadow-sm overflow-hidden">
+
+            <div class="flex items-center justify-between p-3 border-b border-gray-100">
+              <div class="flex items-center space-x-3 cursor-pointer"
+                   th:data-username="${post.user.username}"
+                   onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+                <img th:src="${post.user.avatarUrl != null && !post.user.avatarUrl.isEmpty() ? post.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                     class="w-9 h-9 rounded-full object-cover border border-gray-200" alt="avatar">
+                <div class="flex flex-col">
+                                    <span class="font-semibold text-sm block hover:underline text-gray-900 leading-tight"
+                                          th:text="${post.user.fullName != null && !post.user.fullName.isEmpty() ? post.user.fullName : post.user.username}">Full Name</span>
+                  <span class="text-gray-500 text-[11px] leading-tight mt-0.5">
+                                        <span th:text="${post.user.username}">username</span>
+                                    </span>
+                </div>
+              </div>
+              <button class="text-gray-500 hover:text-black px-2 py-1"><i class="fa-solid fa-ellipsis"></i></button>
+            </div>
+
+            <div class="p-4 pt-3 text-sm text-gray-800 border-b border-gray-50">
+              <div class="whitespace-pre-line leading-relaxed" th:text="${post.content}">Nội dung bài viết chữ...</div>
+              <div class="text-gray-400 text-[10px] mt-2" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Giờ đăng</div>
+            </div>
+
+            <div th:with="mediaCount=${post.mediaList.size()},
+                                      hasVideo=${post.mediaList.?[type == 'VIDEO'].size() > 0},
+                                      videoObj=${hasVideo ? post.mediaList.?[type == 'VIDEO'][0] : null},
+                                      onlyImages=${post.mediaList.?[type == 'IMAGE']}"
+                 class="w-full bg-black flex items-center justify-center relative select-none">
+
+              <div th:if="${hasVideo}" class="w-full relative group">
+                <video th:src="${videoObj.url}" controls class="w-full max-h-[500px] object-contain bg-black"></video>
+
+                <div th:if="${mediaCount > 1}" class="absolute top-3 right-3 bg-black/60 text-white font-semibold text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
+                  <i class="fa-regular fa-images mr-1"></i> <span th:text="'+' + (${mediaCount} - 1)">+1</span>
+                </div>
+              </div>
+
+              <div th:if="${!hasVideo and mediaCount > 0}" class="w-full grid gap-0.5 bg-gray-100"
+                   th:classappend="${mediaCount == 1} ? 'grid-cols-1' : 'grid-cols-2'">
+
+                <div th:each="img, iterStat : ${onlyImages}" th:if="${iterStat.index < 2}"
+                     class="relative aspect-square w-full overflow-hidden bg-black flex items-center justify-center cursor-pointer group">
+
+                  <div class="absolute inset-0 z-10" onclick="openMediaModalFromInputs(this)">
+                    <input type="hidden" class="media-item-data"
+                           th:each="m : ${post.mediaList}"
+                           th:data-id="${m.id}"
+                           th:data-type="${m.type}"
+                           th:data-url="${m.url}" />
+                  </div>
+
+                  <img th:src="${img.url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="post-img">
+
+                  <div th:if="${iterStat.index == 1 and mediaCount > 2}" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white transition group-hover:bg-black/50 z-20 pointer-events-none">
+                    <span class="text-2xl font-bold" th:text="'+' + (${mediaCount} - 2)">+3</span>
+                    <span class="text-[11px] font-medium tracking-wider uppercase mt-1">Xem tất cả</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 text-xl">
+                  <button th:data-post-id="${post.id}"
+                          onclick="toggleLikePost(this, this.getAttribute('data-post-id'))"
+                          class="hover:scale-110 transition duration-200 text-gray-700">
+                    <i th:class="${post.isLikedByCurrentUser} ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart'"></i>
+                  </button>
+                  <button th:data-post-id="${post.id}"
+                          onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                          class="hover:text-gray-500 transition text-gray-700 focus:outline-none">
+                    <i class="fa-regular fa-comment"></i>
+                  </button>
+                </div>
+                <button th:if="${post.user.id != session.currentUser.id}"
+                        th:data-post-id="${post.id}"
+                        onclick="toggleSavePost(this, this.getAttribute('data-post-id'))"
+                        class="text-xl hover:scale-110 transition duration-200 text-gray-700">
+                  <i th:class="${post.isSavedByCurrentUser} ? 'fa-solid fa-bookmark text-black' : 'fa-regular fa-bookmark'"></i>
+                </button>
+
+                <div th:if="${post.user.id == session.currentUser.id}" class="w-5 h-5"></div>
+              </div>
+
+              <p th:id="'like-count-' + ${post.id}"
+                 class="font-semibold text-sm text-gray-900"
+                 th:text="${post.likeCount != null ? post.likeCount : 0} + ' lượt thích'">0 lượt thích</p>
+
+              <!-- Bình luận tiêu biểu (nhiều like nhất) -->
+              <div th:if="${post.featuredComment != null}"
+                   class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
+                <div class="flex items-start space-x-1.5">
+                                    <span class="font-semibold text-gray-950 shrink-0"
+                                          th:text="${post.featuredComment.user.username}">username</span>
+                  <span class="text-gray-700 line-clamp-2"
+                        th:text="${post.featuredComment.content}">Nội dung bình luận...</span>
+                </div>
+                <div th:if="${post.featuredComment.likeCount > 0}"
+                     class="text-[11px] text-gray-400 pl-0.5"
+                     th:text="${post.featuredComment.likeCount} + ' lượt thích'">0 lượt thích</div>
+              </div>
+
+              <!-- Nút xem tất cả bình luận -->
+              <div th:if="${post.commentCount > 0}" class="pt-1">
+                <button th:data-post-id="${post.id}"
+                        onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                        class="text-gray-400 text-xs font-medium hover:text-gray-600 transition focus:outline-none"
+                        th:text="'Xem tất cả ' + ${post.commentCount} + ' bình luận'">Xem bình luận</button>
+              </div>
+
+              <!-- Trường hợp chưa có bình luận nào -->
+              <div th:if="${post.commentCount == 0}" class="pt-1">
+                <button th:data-post-id="${post.id}"
+                        onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                        class="text-gray-400 text-xs font-medium hover:text-gray-600 transition focus:outline-none">
+                  Thêm bình luận...
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div th:if="${#lists.isEmpty(posts)}" class="text-center py-12 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <i class="fa-regular fa-compass text-5xl text-gray-300 mb-3 block"></i>
+            <p class="text-gray-500 text-sm max-w-xs mx-auto">Hiện chưa có bài viết nào để khám phá. Hãy quay lại sau nhé!</p>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="hidden lg:block w-full max-w-[320px] pt-4 space-y-4">
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4 cursor-pointer"
+               th:data-username="${session.currentUser.username}"
+               onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+            <img th:src="${session.currentUser.avatarUrl != null && !session.currentUser.avatarUrl.isEmpty() ? session.currentUser.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                 class="w-14 h-14 rounded-full object-cover border border-gray-200" alt="Current User">
+            <div>
+              <span class="font-semibold text-sm block" th:text="${session.currentUser.username}">my_username</span>
+              <span class="text-gray-400 text-sm block truncate max-w-[140px]" th:text="${session.currentUser.fullName != null && !session.currentUser.fullName.isEmpty() ? session.currentUser.fullName : 'Người dùng'}">Họ Tên</span>
+            </div>
+          </div>
+          <button onclick="window.location.href='/login'" class="text-blue-500 text-xs font-bold hover:text-blue-700">Chuyển</button>
+        </div>
+
+        <div class="flex justify-between items-center text-sm font-semibold pt-4">
+          <span class="text-gray-400">Gợi ý cho bạn</span>
+          <button onclick="window.location.href='/search'" class="text-gray-800 text-xs hover:text-gray-400">Xem tất cả</button>
+        </div>
+
+        <div class="space-y-3">
+          <div th:each="user : ${suggestions}" class="flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer"
+                 th:data-username="${user.username}"
+                 onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+              <img th:src="${user.avatarUrl != null && !user.avatarUrl.isEmpty() ? user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                   class="w-8 h-8 rounded-full object-cover" alt="suggest">
+              <div>
+                <span class="font-semibold text-xs block hover:underline" th:text="${user.username}">username</span>
+                <span class="text-gray-400 text-[10px] block truncate max-w-[130px]" th:text="${user.fullName != null && !user.fullName.isEmpty() ? user.fullName : 'Thành viên mới'}">FullName</span>
+              </div>
+            </div>
+            <button th:data-username="${user.username}"
+                    onclick="toggleFollowInExplore(this, this.getAttribute('data-username'))"
+                    class="text-blue-500 text-xs font-bold hover:text-blue-700 transition">Theo dõi</button>
+          </div>
+
+          <div th:if="${suggestions.isEmpty()}" class="text-xs text-gray-400 py-1 text-center">
+            Không có gợi ý mới nào dành cho bạn.
+          </div>
+        </div>
+
+        <footer class="text-[11px] text-gray-300 space-y-4 pt-6 select-none">
+          <p class="uppercase">Giới thiệu • Trợ giúp • Báo chí • API • Việc làm • Quyền riêng tư • Điều khoản</p>
+          <p>© 2026 INSTAGRAM MINI FROM SPRING BOOT</p>
+        </footer>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div th:replace="~{modals/media-modal :: mediaModal}"></div>
+<div th:replace="~{modals/post-detail-modal :: postDetailModal}"></div>
+
+<script>
+  // Hàm xử lý tương tác AJAX Follow/Unfollow trên trang Khám phá
+  async function toggleFollowInExplore(button, username) {
+      button.disabled = true;
+      try {
+          const response = await fetch(`/profile/${username}/follow`, { method: 'POST' });
+          const data = await response.json();
+
+          if (data.success) {
+              if (data.isFollowing) {
+                  button.innerText = 'Hủy theo dõi';
+                  button.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition";
+              } else {
+                  button.innerText = 'Theo dõi';
+                  button.className = "text-blue-500 text-xs font-bold hover:text-blue-700 transition";
+              }
+
+              // Sau khi follow, người này không còn thuộc "khám phá" nữa -> reload lại feed
+              setTimeout(() => { window.location.reload(); }, 600);
+          } else {
+              alert(data.message || "Có lỗi xảy ra");
+              button.disabled = false;
+          }
+      } catch (err) {
+          console.error("Lỗi gửi tương tác follow:", err);
+          button.disabled = false;
+      }
+  }
+
+  async function toggleLikePost(button, postId) {
+  const heartIcon = button.querySelector('i');
+  const likeCountTxt = document.getElementById(`like-count-${postId}`);
+
+  // Khóa nút tạm thời ngăn chặn user click spam phá hoại DB
+  button.disabled = true;
+
+  try {
+      const response = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+      const data = await response.json();
+
+      if (data.success) {
+          // Nếu trạng thái trả về là đã Like thành công
+          if (data.liked) {
+              heartIcon.className = "fa-solid fa-heart text-red-500 transform scale-125 transition duration-100";
+              setTimeout(() => heartIcon.classList.remove('scale-125'), 100);
+          } else {
+              // Nếu trạng thái là Unlike thành công
+              heartIcon.className = "fa-regular fa-heart text-gray-700";
+          }
+
+          // Thay đổi số liệu text hiển thị ngay trên màn hình mà không hề load lại trang
+          likeCountTxt.innerText = `${data.likeCount} lượt thích`;
+      } else {
+          alert(data.message || "Có lỗi xảy ra khi thực hiện tương tác.");
+      }
+  } catch (err) {
+      console.error("Lỗi gửi tương tác Like bài viết:", err);
+  } finally {
+      // Mở khóa nút sau khi xử lý xong
+      button.disabled = false;
+  }
+}
+
+  async function toggleSavePost(button, postId) {
+  const bookmarkIcon = button.querySelector('i');
+
+  // Khóa nút tạm thời tránh spam click liên tục
+  button.disabled = true;
+
+  try {
+      const response = await fetch(`/api/posts/${postId}/save`, { method: 'POST' });
+      const data = await response.json();
+
+      if (data.success) {
+          if (data.saved) {
+              // Đổi thành icon bookmark đã lưu (đầy màu đen)
+              bookmarkIcon.className = "fa-solid fa-bookmark text-black animate-scale-up";
+          } else {
+              // Trở về icon bookmark trống
+              bookmarkIcon.className = "fa-regular fa-bookmark";
+          }
+      } else {
+          alert(data.message || "Không thể thực hiện hành động lưu bài viết.");
+      }
+  } catch (err) {
+      console.error("Lỗi gửi tương tác lưu bài viết:", err);
+  } finally {
+      button.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

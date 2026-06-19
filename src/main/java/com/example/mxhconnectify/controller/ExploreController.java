@@ -1,7 +1,6 @@
 package com.example.mxhconnectify.controller;
 
 import com.example.mxhconnectify.dto.SearchUserDTO;
-import com.example.mxhconnectify.entity.Like;
 import com.example.mxhconnectify.entity.Post;
 import com.example.mxhconnectify.entity.User;
 import com.example.mxhconnectify.service.LikeService;
@@ -23,8 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @Controller
-@RequestMapping("/home")
-public class HomeController {
+@RequestMapping("/explore")
+public class ExploreController {
 
     private final PostService postService;
     private final UserService userService;
@@ -32,7 +31,7 @@ public class HomeController {
     private final SavedPostService savedPostService;
 
     @Autowired
-    public HomeController(PostService postService,  UserService userService,  LikeService likeService,  SavedPostService savedPostService) {
+    public ExploreController(PostService postService, UserService userService, LikeService likeService, SavedPostService savedPostService) {
         this.postService = postService;
         this.userService = userService;
         this.likeService = likeService;
@@ -40,9 +39,9 @@ public class HomeController {
     }
 
     @GetMapping
-    public String home(HttpServletRequest request,
-                       @RequestParam(defaultValue = "0") int page,
-                       Model model) {
+    public String explore(HttpServletRequest request,
+                          @RequestParam(defaultValue = "0") int page,
+                          Model model) {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("currentUser") == null) {
             return "redirect:/login";
@@ -50,26 +49,21 @@ public class HomeController {
 
         User currentUser = (User) session.getAttribute("currentUser");
 
-        // 1. Lấy danh sách bài viết Newsfeed
+        // 1. Lấy danh sách bài viết của những người MÌNH CHƯA THEO DÕI
         int pageSize = 20;
-        Page<Post> postPage = postService.getHomeFeed(currentUser, page, pageSize);
-        likeService.setLikeStatusForPosts(postPage.getContent(), currentUser);
-        savedPostService.setSaveStatusForPosts(postPage.getContent(), currentUser);
+        Page<Post> explorePage = postService.getExploreFeed(currentUser, page, pageSize);
+        likeService.setLikeStatusForPosts(explorePage.getContent(), currentUser);
+        savedPostService.setSaveStatusForPosts(explorePage.getContent(), currentUser);
 
-        model.addAttribute("posts", postPage.getContent());
+        model.addAttribute("posts", explorePage.getContent());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", postPage.getTotalPages());
+        model.addAttribute("totalPages", explorePage.getTotalPages());
 
-        // 2. Lấy danh sách những người ĐANG THEO DÕI (Dùng cho thanh nằm ngang)
-        List<SearchUserDTO> followingList = userService.getFollowingUsers(currentUser.getId());
-        model.addAttribute("followingUsers", followingList);
-
-        // 3. Lấy danh sách 5 người GỢI Ý NGẪU NHIÊN (Chưa theo dõi - dùng cho thanh dọc)
+        // 2. Danh sách 5 người gợi ý ngẫu nhiên (vẫn giữ cho cột dọc bên phải)
         Pageable topFive = PageRequest.of(0, 5);
         List<SearchUserDTO> suggestionList = userService.getRandomUsers(currentUser.getId(), topFive);
         model.addAttribute("suggestions", suggestionList);
 
-
-        return "home";
+        return "explore";
     }
 }

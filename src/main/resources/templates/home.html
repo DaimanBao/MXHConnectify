@@ -25,18 +25,32 @@
 
             <section class="lg:col-span-2 space-y-6 max-w-[470px] mx-auto w-full pb-12">
 
-                <div class="bg-white border border-gray-200 rounded-xl p-4 flex space-x-4 overflow-x-auto shadow-sm">
-                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
-                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
-                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
+                <div class="bg-white border border-gray-200 rounded-xl p-4 flex space-x-4 overflow-x-auto shadow-sm select-none items-center">
+
+                    <th:block th:each="user, iterStat : ${followingUsers}">
+                        <div th:if="${iterStat.index < 5}"
+                             th:data-username="${user.username}"
+                             onclick="window.location.href='/profile/' + this.getAttribute('data-username')"
+                             class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0 w-16">
+                            <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
+                                <img th:src="${user.avatarUrl != null && !user.avatarUrl.isEmpty() ? user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                                     class="w-14 h-14 rounded-full object-cover border-2 border-white bg-white" alt="story">
+                            </div>
+                            <span class="text-xs text-gray-500 w-16 truncate text-center" th:text="${user.username}">username</span>
                         </div>
-                        <span class="text-xs text-gray-500 w-16 truncate text-center">user_cool</span>
+                    </th:block>
+
+                    <div th:if="${followingUsers.size() > 5}"
+                         onclick="openFollowingModal()"
+                         class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0 w-16">
+                        <div class="w-14 h-14 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
+                            <span class="text-xs font-bold text-gray-500" th:text="'+' + (${followingUsers.size() - 5})">+0</span>
+                        </div>
+                        <span class="text-xs text-gray-400 font-medium text-center">Xem thêm</span>
                     </div>
-                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
-                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
-                        </div>
-                        <span class="text-xs text-gray-500 w-16 truncate text-center">lan_anh.dev</span>
+
+                    <div th:if="${followingUsers.isEmpty()}" class="text-xs text-gray-400 py-2 px-1">
+                        Hãy theo dõi thêm mọi người để cập nhật bảng tin nhé!
                     </div>
                 </div>
 
@@ -45,14 +59,16 @@
                     <div th:each="post : ${posts}" class="bg-white border border-gray-200 rounded-xl mb-6 shadow-sm overflow-hidden">
 
                         <div class="flex items-center justify-between p-3 border-b border-gray-100">
-                            <div class="flex items-center space-x-3">
-                                <img th:src="${post.user.avatarUrl != null ? post.user.avatarUrl : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}"
+                            <div class="flex items-center space-x-3 cursor-pointer"
+                                 th:data-username="${post.user.username}"
+                                 onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+                                <img th:src="${post.user.avatarUrl != null && !post.user.avatarUrl.isEmpty() ? post.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
                                      class="w-9 h-9 rounded-full object-cover border border-gray-200" alt="avatar">
                                 <div class="flex flex-col">
-                                    <span class="font-semibold text-sm block hover:underline cursor-pointer text-gray-900 leading-tight"
-                                          th:text="${post.user.fullName != null ? post.user.fullName : post.user.username}">Full Name</span>
+                                    <span class="font-semibold text-sm block hover:underline text-gray-900 leading-tight"
+                                          th:text="${post.user.fullName != null && !post.user.fullName.isEmpty() ? post.user.fullName : post.user.username}">Full Name</span>
                                     <span class="text-gray-500 text-[11px] leading-tight mt-0.5">
-                                        <span th:text="${post.user.username}">username</span> • Quy Nhơn, Bình Định
+                                        <span th:text="${post.user.username}">username</span>
                                     </span>
                                 </div>
                             </div>
@@ -60,7 +76,7 @@
                         </div>
 
                         <div class="p-4 pt-3 text-sm text-gray-800 border-b border-gray-50">
-                            <div class="whitespace-pre-line leading-relaxed" th:text="${post.content}">Nội dung bài viết chữ hiển thị ở đây trước...</div>
+                            <div class="whitespace-pre-line leading-relaxed" th:text="${post.content}">Nội dung bài viết chữ...</div>
                             <div class="text-gray-400 text-[10px] mt-2" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Giờ đăng</div>
                         </div>
 
@@ -105,24 +121,60 @@
                         <div class="p-3 space-y-2">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4 text-xl">
-                                    <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-heart"></i></button>
-                                    <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
+                                    <button th:data-post-id="${post.id}"
+                                            onclick="toggleLikePost(this, this.getAttribute('data-post-id'))"
+                                            class="hover:scale-110 transition duration-200 text-gray-700">
+                                        <i th:class="${post.isLikedByCurrentUser} ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart'"></i>
+                                    </button>
+                                    <button th:data-post-id="${post.id}"
+                                            onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                                            class="hover:text-gray-500 transition text-gray-700 focus:outline-none">
+                                        <i class="fa-regular fa-comment"></i>
+                                    </button>
                                 </div>
-                                <button class="text-xl hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-bookmark"></i></button>
+                                <button th:if="${post.user.id != session.currentUser.id}"
+                                        th:data-post-id="${post.id}"
+                                        onclick="toggleSavePost(this, this.getAttribute('data-post-id'))"
+                                        class="text-xl hover:scale-110 transition duration-200 text-gray-700">
+                                    <i th:class="${post.isSavedByCurrentUser} ? 'fa-solid fa-bookmark text-black' : 'fa-regular fa-bookmark'"></i>
+                                </button>
+
+                                <div th:if="${post.user.id == session.currentUser.id}" class="w-5 h-5"></div>
                             </div>
 
-                            <p class="font-semibold text-sm text-gray-900" th:text="${post.likeCount} + ' lượt thích'">0 lượt thích</p>
+                            <p th:id="'like-count-' + ${post.id}"
+                               class="font-semibold text-sm text-gray-900"
+                               th:text="${post.likeCount != null ? post.likeCount : 0} + ' lượt thích'">0 lượt thích</p>
 
-                            <div class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
+                            <!-- Bình luận tiêu biểu (nhiều like nhất) -->
+                            <div th:if="${post.featuredComment != null}"
+                                 class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
                                 <div class="flex items-start space-x-1.5">
-                                    <span class="font-semibold text-gray-950 shrink-0">alex_vng</span>
-                                    <span class="text-gray-700 line-clamp-2">Đây là nội dung của một bình luận ngẫu nhiên mẫu được hiển thị bao quát trên trang Home, không kèm theo phần media hình ảnh/video của comment đó.</span>
+                                    <span class="font-semibold text-gray-950 shrink-0"
+                                          th:text="${post.featuredComment.user.username}">username</span>
+                                    <span class="text-gray-700 line-clamp-2"
+                                          th:text="${post.featuredComment.content}">Nội dung bình luận...</span>
                                 </div>
+                                <div th:if="${post.featuredComment.likeCount > 0}"
+                                     class="text-[11px] text-gray-400 pl-0.5"
+                                     th:text="${post.featuredComment.likeCount} + ' lượt thích'">0 lượt thích</div>
                             </div>
 
+                            <!-- Nút xem tất cả bình luận -->
                             <div th:if="${post.commentCount > 0}" class="pt-1">
-                                <button class="text-gray-400 text-xs font-medium hover:text-gray-600 transition"
+                                <button th:data-post-id="${post.id}"
+                                        onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                                        class="text-gray-400 text-xs font-medium hover:text-gray-600 transition focus:outline-none"
                                         th:text="'Xem tất cả ' + ${post.commentCount} + ' bình luận'">Xem bình luận</button>
+                            </div>
+
+                            <!-- Trường hợp chưa có bình luận nào -->
+                            <div th:if="${post.commentCount == 0}" class="pt-1">
+                                <button th:data-post-id="${post.id}"
+                                        onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                                        class="text-gray-400 text-xs font-medium hover:text-gray-600 transition focus:outline-none">
+                                    Thêm bình luận...
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -136,32 +188,45 @@
             </section>
 
             <section class="hidden lg:block w-full max-w-[320px] pt-4 space-y-4">
+
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" class="w-14 h-14 rounded-full object-cover border border-gray-200" alt="Current User">
+                    <div class="flex items-center space-x-4 cursor-pointer"
+                         th:data-username="${session.currentUser.username}"
+                         onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+                        <img th:src="${session.currentUser.avatarUrl != null && !session.currentUser.avatarUrl.isEmpty() ? session.currentUser.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                             class="w-14 h-14 rounded-full object-cover border border-gray-200" alt="Current User">
                         <div>
-                            <span class="font-semibold text-sm block cursor-pointer">bao_software</span>
-                            <span class="text-gray-400 text-sm block">Nguyễn Văn Bảo</span>
+                            <span class="font-semibold text-sm block" th:text="${session.currentUser.username}">my_username</span>
+                            <span class="text-gray-400 text-sm block truncate max-w-[140px]" th:text="${session.currentUser.fullName != null && !session.currentUser.fullName.isEmpty() ? session.currentUser.fullName : 'Người dùng'}">Họ Tên</span>
                         </div>
                     </div>
-                    <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Chuyển</button>
+                    <button onclick="window.location.href='/login'" class="text-blue-500 text-xs font-bold hover:text-blue-700">Chuyển</button>
                 </div>
 
                 <div class="flex justify-between items-center text-sm font-semibold pt-4">
                     <span class="text-gray-400">Gợi ý cho bạn</span>
-                    <button class="text-gray-800 text-xs hover:text-gray-400">Xem tất cả</button>
+                    <button onclick="window.location.href='/search'" class="text-gray-800 text-xs hover:text-gray-400">Xem tất cả</button>
                 </div>
 
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150" class="w-8 h-8 rounded-full object-cover" alt="suggest">
+                    <div th:each="user : ${suggestions}" class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 cursor-pointer"
+                             th:data-username="${user.username}"
+                             onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+                            <img th:src="${user.avatarUrl != null && !user.avatarUrl.isEmpty() ? user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                                 class="w-8 h-8 rounded-full object-cover" alt="suggest">
                             <div>
-                                <span class="font-semibold text-xs block hover:underline cursor-pointer">lucy.dev</span>
-                                <span class="text-gray-400 text-[10px] block">Có lan_anh.dev theo dõi</span>
+                                <span class="font-semibold text-xs block hover:underline" th:text="${user.username}">username</span>
+                                <span class="text-gray-400 text-[10px] block truncate max-w-[130px]" th:text="${user.fullName != null && !user.fullName.isEmpty() ? user.fullName : 'Thành viên mới'}">FullName</span>
                             </div>
                         </div>
-                        <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
+                        <button th:data-username="${user.username}"
+                                onclick="toggleFollowInHome(this, this.getAttribute('data-username'))"
+                                class="text-blue-500 text-xs font-bold hover:text-blue-700 transition">Theo dõi</button>
+                    </div>
+
+                    <div th:if="${suggestions.isEmpty()}" class="text-xs text-gray-400 py-1 text-center">
+                        Không có gợi ý mới nào dành cho bạn.
                     </div>
                 </div>
 
@@ -174,7 +239,123 @@
         </div>
     </main>
 </div>
-<div th:replace="~{modals/media-modal :: mediaModal}"></div>
 
+<div th:replace="~{modals/following-modal :: followingModal}"></div>
+<div th:replace="~{modals/media-modal :: mediaModal}"></div>
+<div th:replace="~{modals/post-detail-modal :: postDetailModal}"></div>
+
+<script>
+    // Hàm kích hoạt mở Modal Đang theo dõi
+    function openFollowingModal() {
+        const modal = document.getElementById('following-modal');
+        if(!modal) return;
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('div').classList.remove('scale-95');
+        }, 10);
+    }
+
+    // Hàm đóng Modal Đang theo dõi
+    function closeFollowingModal() {
+        const modal = document.getElementById('following-modal');
+        if(!modal) return;
+        modal.classList.add('opacity-0');
+        modal.querySelector('div').classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Hàm xử lý tương tác AJAX Follow/Unfollow trên Home
+    async function toggleFollowInHome(button, username) {
+        button.disabled = true;
+        try {
+            const response = await fetch(`/profile/${username}/follow`, { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.isFollowing) {
+                    button.innerText = 'Hủy theo dõi';
+                    button.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition";
+                } else {
+                    button.innerText = 'Theo dõi';
+                    button.className = "text-blue-500 text-xs font-bold hover:text-blue-700 transition";
+                }
+
+                // Refresh lại dữ liệu Newsfeed và Stories sau khi tương tác thành công
+                setTimeout(() => { window.location.reload(); }, 600);
+            } else {
+                alert(data.message || "Có lỗi xảy ra");
+                button.disabled = false;
+            }
+        } catch (err) {
+            console.error("Lỗi gửi tương tác follow:", err);
+            button.disabled = false;
+        }
+    }
+
+    async function toggleLikePost(button, postId) {
+    const heartIcon = button.querySelector('i');
+    const likeCountTxt = document.getElementById(`like-count-${postId}`);
+
+    // Khóa nút tạm thời ngăn chặn user click spam phá hoại DB
+    button.disabled = true;
+
+    try {
+        const response = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+            // Nếu trạng thái trả về là đã Like thành công
+            if (data.liked) {
+                heartIcon.className = "fa-solid fa-heart text-red-500 transform scale-125 transition duration-100";
+                setTimeout(() => heartIcon.classList.remove('scale-125'), 100);
+            } else {
+                // Nếu trạng thái là Unlike thành công
+                heartIcon.className = "fa-regular fa-heart text-gray-700";
+            }
+
+            // Thay đổi số liệu text hiển thị ngay trên màn hình mà không hề load lại trang
+            likeCountTxt.innerText = `${data.likeCount} lượt thích`;
+        } else {
+            alert(data.message || "Có lỗi xảy ra khi thực hiện tương tác.");
+        }
+    } catch (err) {
+        console.error("Lỗi gửi tương tác Like bài viết:", err);
+    } finally {
+        // Mở khóa nút sau khi xử lý xong
+        button.disabled = false;
+    }
+}
+
+    async function toggleSavePost(button, postId) {
+    const bookmarkIcon = button.querySelector('i');
+
+    // Khóa nút tạm thời tránh spam click liên tục
+    button.disabled = true;
+
+    try {
+        const response = await fetch(`/api/posts/${postId}/save`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.saved) {
+                // Đổi thành icon bookmark đã lưu (đầy màu đen)
+                bookmarkIcon.className = "fa-solid fa-bookmark text-black animate-scale-up";
+            } else {
+                // Trở về icon bookmark trống
+                bookmarkIcon.className = "fa-regular fa-bookmark";
+            }
+        } else {
+            alert(data.message || "Không thể thực hiện hành động lưu bài viết.");
+        }
+    } catch (err) {
+        console.error("Lỗi gửi tương tác lưu bài viết:", err);
+    } finally {
+        button.disabled = false;
+    }
+}
+</script>
 </body>
 </html>
