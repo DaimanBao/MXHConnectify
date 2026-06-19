@@ -1,0 +1,62 @@
+<aside th:fragment="sidebar" class="w-20 xl:w-64 border-r border-gray-200 bg-white p-3 xl:p-6 flex flex-col justify-between h-full fixed left-0 top-0 z-50">
+    <div class="space-y-8">
+        <div class="py-2 px-3">
+            <a th:href="@{/home}" class="block">
+                <h1 class="font-serif text-2xl font-bold hidden xl:block tracking-wide select-none">Instagram</h1>
+                <i class="fa-brands fa-instagram text-2xl xl:hidden"></i>
+            </a>
+        </div>
+
+        <nav class="space-y-2">
+            <a th:href="@{/home}" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span class="hidden xl:inline text-sm">Trang chủ</span>
+            </a>
+
+            <a th:href="@{/search}" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                <span class="hidden xl:inline text-sm">Tìm kiếm</span>
+            </a>
+
+            <a th:href="@{#}" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                <i class="fa-regular fa-paper-plane text-xl"></i>
+                <span class="hidden xl:inline text-sm">Tin nhắn</span>
+            </a>
+
+            <a th:href="@{#}" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                <i class="fa-regular fa-heart text-xl"></i>
+                <span class="hidden xl:inline text-sm">Thông báo</span>
+            </a>
+
+            <a th:href="@{/post}" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+                <i class="fa-regular fa-square-plus text-xl"></i>
+                <span class="hidden xl:inline text-sm">Tạo bài viết</span>
+            </a>
+
+            <a th:href="${session.currentUser != null} ? @{/profile/{username}(username=${session.currentUser.username})} : @{/login}"
+               class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">
+
+                <img th:src="${session.currentUser != null && session.currentUser.avatarUrl != null} ? ${session.currentUser.avatarUrl} : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+                     class="w-6 h-6 rounded-full object-cover border border-gray-300" alt="Avatar">
+
+                <span class="hidden xl:inline text-sm">Trang cá nhân</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="mt-auto space-y-1">
+        <a th:href="@{/logout}" class="flex items-center space-x-4 p-3 text-red-500 hover:bg-red-50 rounded-xl transition duration-200 text-left text-sm font-semibold">
+            <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            <span class="hidden xl:inline">Đăng xuất</span>
+        </a>
+
+        <button class="w-full flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200 text-left">
+            <i class="fa-solid fa-bars text-xl"></i>
+            <span class="hidden xl:inline text-sm">Xem thêm</span>
+        </button>
+    </div>
+</aside>
+<!--            <a href="#" class="flex items-center space-x-4 p-3 hover:bg-gray-100 rounded-xl transition duration-200">-->
+<!--                <i class="fa-regular fa-compass text-xl"></i>-->
+<!--                <span class="hidden xl:inline text-sm">Khám phá</span>-->
+<!--            </a>-->

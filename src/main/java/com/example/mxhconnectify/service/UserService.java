@@ -1,28 +1,39 @@
 package com.example.mxhconnectify.service;
 
-import com.example.mxhconnectify.dao.UserDAO;
 import com.example.mxhconnectify.dto.LoginDTO;
 import com.example.mxhconnectify.dto.RegisterDTO;
+import com.example.mxhconnectify.dto.SearchUserDTO;
 import com.example.mxhconnectify.entity.User;
+import com.example.mxhconnectify.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
-    private final UserDAO userDAO;
+    private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
     @Autowired // Inject đầy đủ các bean cần thiết để xử lý nghiệp vụ
-    public UserService(UserDAO userDAO, BCryptPasswordEncoder passwordEncoder, EmailService emailService) {
-        this.userDAO = userDAO;
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService) {
+        this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
     }
@@ -30,12 +41,49 @@ public class UserService {
     /**
      * Xử lý đăng ký tài khoản mới: Check trùng, băm mật khẩu, tạo token và bắn mail ngầm
      */
+//    public void registerNewUser(RegisterDTO registerDTO) {
+//        // 1. Kiểm tra tồn tại (Không cần Transaction ở đây, hoặc dùng transaction readOnly nếu muốn)
+//        if (userRepository.existsByUsername(registerDTO.getUsername())) {
+//            throw new RuntimeException("Tên tài khoản này đã tồn tại!");
+//        }
+//        if (userRepository.existsByEmail(registerDTO.getEmail())) {
+//            throw new RuntimeException("Email này đã được sử dụng!");
+//        }
+//
+//        // 2. Gọi hàm lưu vào DB có Transaction riêng
+//        User user = saveUserToDatabase(registerDTO);
+//
+//        // 3. Gửi mail SAU KHI transaction DB đã đóng (khi hàm saveUserToDatabase kết thúc)
+//        // Lúc này, khóa database đã được giải phóng, không còn bị lock timeout nữa
+//        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), user.getEmailToken());
+//    }
+//
+//
+//    @Transactional
+//    protected User saveUserToDatabase(RegisterDTO registerDTO) {
+//        String encryptedPassword = passwordEncoder.encode(registerDTO.getPassword());
+//        String token = UUID.randomUUID().toString();
+//        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(15);
+//
+//        User user = User.builder()
+//                .username(registerDTO.getUsername())
+//                .email(registerDTO.getEmail())
+//                .password(encryptedPassword)
+//                .fullName(registerDTO.getFullName())
+//                .isActive(false)
+//                .emailToken(token)
+//                .emailTokenExpiry(expiryTime)
+//                .build();
+//
+//        return userRepository.save(user);
+//    }
+
     @Transactional
     public void registerNewUser(RegisterDTO registerDTO) {
-        if (userDAO.existsByUsername(registerDTO.getUsername())) {
+        if (userRepository.existsByUsername(registerDTO.getUsername())) {
             throw new RuntimeException("Tên tài khoản này đã tồn tại!");
         }
-        if (userDAO.existsByEmail(registerDTO.getEmail())) {
+        if (userRepository.existsByEmail(registerDTO.getEmail())) {
             throw new RuntimeException("Email này đã được sử dụng!");
         }
 
@@ -48,23 +96,22 @@ public class UserService {
                 .username(registerDTO.getUsername())
                 .email(registerDTO.getEmail())
                 .password(encryptedPassword)
-                .bio(registerDTO.getBio())
+                .fullName(registerDTO.getFullName())
                 .isActive(false) // Mặc định khóa, chờ kích hoạt email
                 .emailToken(token)
                 .emailTokenExpiry(expiryTime)
                 .build();
 
-        userDAO.save(user);
+        userRepository.save(user);
 
-        emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), token);
+        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), token);
     }
-
     /**
      * Xử lý nghiệp vụ Đăng nhập: Cho phép nhập cả Username hoặc Email
      */
     @Transactional(readOnly = true)
     public User authenticateUser(LoginDTO loginDTO) {
-        User user = userDAO.findByUsernameOrEmail(loginDTO.getUsernameOrEmail(), loginDTO.getUsernameOrEmail())
+        User user = userRepository.findByUsernameOrEmail(loginDTO.getUsernameOrEmail(), loginDTO.getUsernameOrEmail())
                 .orElseThrow(() -> new RuntimeException("Tên tài khoản hoặc Email không tồn tại!"));
 
         if (!user.isActive()) {
@@ -85,7 +132,7 @@ public class UserService {
      */
     @Transactional
     public boolean verifyEmailToken(String token) {
-        Optional<User> userOpt = userDAO.findByEmailToken(token);
+        Optional<User> userOpt = userRepository.findByEmailToken(token);
 
         if (userOpt.isEmpty()) {
             return false;
@@ -101,7 +148,7 @@ public class UserService {
         user.setEmailToken(null);
         user.setEmailTokenExpiry(null);
 
-        userDAO.save(user);
+        userRepository.save(user);
         return true;
     }
 
@@ -115,7 +162,7 @@ public class UserService {
     @Transactional
     public void sendForgotPasswordEmail(String email) {
         // Tìm user theo email thông qua UserDAO
-        User user = userDAO.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Địa chỉ Email này chưa được đăng ký!"));
 
         // Sinh mã token đặt lại mật khẩu và cấu hình thời gian hết hạn (15 phút)
@@ -123,10 +170,10 @@ public class UserService {
         user.setForgotPasswordToken(token);
         user.setForgotPasswordTokenExpiry(LocalDateTime.now().plusMinutes(15));
 
-        userDAO.save(user);
+        userRepository.save(user);
 
         // Gọi sang EmailService để gửi đường dẫn thay đổi mật khẩu (Hãy chắc chắn bạn đã tạo hàm này trong EmailService)
-        emailService.sendResetPasswordEmail(user.getEmail(), user.getUsername(), token);
+        emailService.sendResetPasswordEmail(user.getEmail(), user.getFullName(), token);
     }
 
     /**
@@ -134,7 +181,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public boolean validateForgotPasswordToken(String token) {
-        Optional<User> userOpt = userDAO.findByForgotPasswordToken(token);
+        Optional<User> userOpt = userRepository.findByForgotPasswordToken(token);
         if (userOpt.isEmpty()) {
             return false;
         }
@@ -146,14 +193,14 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
-        return userDAO.findByUsername(username);
+        return userRepository.findByUsername(username);
     }
     /**
      * Bước 3: Người dùng nhập mật khẩu mới hợp lệ, tiến hành băm mật khẩu và lưu cập nhật vào DB
      */
     @Transactional
     public void updatePassword(String token, String newPassword) {
-        User user = userDAO.findByForgotPasswordToken(token)
+        User user = userRepository.findByForgotPasswordToken(token)
                 .orElseThrow(() -> new RuntimeException("Mã xác thực không hợp lệ hoặc đã bị thay đổi!"));
 
         if (user.getForgotPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
@@ -167,6 +214,67 @@ public class UserService {
         user.setForgotPasswordToken(null);
         user.setForgotPasswordTokenExpiry(null);
 
-        userDAO.save(user);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateProfile(User user) {
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+
+        existingUser.setFullName(user.getFullName());
+        existingUser.setHeadline(user.getHeadline());
+        existingUser.setDescription(user.getDescription());
+        existingUser.setCommunityLinks(user.getCommunityLinks());
+
+        userRepository.save(existingUser);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SearchUserDTO> searchUsersByKeyword(String keyword, Long currentId, Pageable pageable) {
+        // Truyền đủ 3 tham số: keyword, currentId, pageable
+        List<User> users = userRepository.searchByKeyword(keyword, currentId, pageable);
+
+        return users.stream()
+                .map(user -> SearchUserDTO.builder()
+                        .username(user.getUsername())
+                        .fullName(user.getFullName())
+                        .avatarUrl(user.getAvatarUrl())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SearchUserDTO> getRandomUsers(Long currentUserId, Pageable pageable) {
+        return userRepository.findRandomUsers(currentUserId, pageable)
+                .stream()
+                .map(user -> SearchUserDTO.builder()
+                        .username(user.getUsername())
+                        .fullName(user.getFullName())
+                        .avatarUrl(user.getAvatarUrl())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public void updateAvatar(User user, MultipartFile file) throws IOException {
+        if (file.isEmpty()) throw new RuntimeException("Vui lòng chọn ảnh!");
+
+        // 1. Nếu user đã có ảnh cũ, xóa nó đi
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            // Giả sử avatarUrl lưu dạng "/uploads/abc.png"
+            // Bạn cần tách tên file ra và xóa file vật lý tương ứng
+            String oldFileName = user.getAvatarUrl().replace("/avatar_uploads/", "");
+            Path oldPath = Paths.get("E:/MXHConnectify/avatar_uploads/" + oldFileName);
+            Files.deleteIfExists(oldPath);
+        }
+
+        // 2. Lưu file mới như bình thường
+        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path path = Paths.get("E:/MXHConnectify/avatar_uploads/" + fileName);
+        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+        // 3. Cập nhật DB
+        user.setAvatarUrl("/avatar_uploads/" + fileName);
+        userRepository.save(user);
     }
 }

@@ -1,0 +1,19 @@
+<div th:fragment="avatarModal" id="avatarModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white w-80 rounded-2xl text-center overflow-hidden shadow-2xl">
+        <div class="p-5 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900">Đổi ảnh đại diện</h3>
+        </div>
+        <button onclick="document.getElementById('avatarInput').click()"
+                class="w-full py-4 text-blue-500 font-bold border-b border-gray-100 hover:bg-gray-50">
+            Tải ảnh lên
+        </button>
+        <button onclick="closeAvatarModal()" class="w-full py-4 text-gray-900 hover:bg-gray-50">
+            Hủy
+        </button>
+    </div>
+
+    <!-- Form ẩn nằm ngay trong modal fragment -->
+    <form id="avatarForm" th:action="@{/profile/edit/avatar}" method="post" enctype="multipart/form-data" class="hidden">
+        <input type="file" name="avatarFile" id="avatarInput" accept="image/*" onchange="document.getElementById('avatarForm').submit()">
+    </form>
+</div>

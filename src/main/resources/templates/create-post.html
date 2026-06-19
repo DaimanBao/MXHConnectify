@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo bài viết mới</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+
+<div class="flex h-screen">
+  <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+  <main class="flex-1 pl-20 xl:pl-64 h-screen overflow-y-auto flex items-center justify-center p-6">
+
+    <div class="bg-white w-full max-w-lg rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div class="border-b p-4 text-center font-semibold text-gray-800">Tạo bài viết mới</div>
+
+      <div th:if="${successMessage}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded m-4 text-sm">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded m-4 text-sm">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <form th:action="@{/post/create}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+
+        <div class="flex items-center space-x-3 mb-4">
+          <img th:src="${session.currentUser != null && session.currentUser.avatarUrl != null} ? ${session.currentUser.avatarUrl} : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+               class="w-10 h-10 rounded-full object-cover border border-gray-200" alt="Avatar">
+          <div class="flex flex-col">
+            <span class="font-bold text-sm text-gray-900" th:text="${session.currentUser.fullName}">Tên đầy đủ</span>
+            <span class="text-xs text-gray-500" th:text="${'@' + session.currentUser.username}">@username</span>
+          </div>
+        </div>
+
+        <textarea name="content" rows="4" placeholder="Bạn đang nghĩ gì?"
+                  class="w-full border-none focus:ring-0 p-2 text-sm resize-none text-gray-700"></textarea>
+
+        <div class="border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition"
+             onclick="document.getElementById('fileInput').click()">
+          <i class="fas fa-images text-3xl text-gray-300 mb-2"></i>
+          <span class="text-xs text-gray-400">Chọn ảnh hoặc video (Tối đa 5 ảnh, 1 video)</span>
+          <input type="file" name="files" id="fileInput" multiple accept="image/*,video/*" class="hidden" onchange="previewFiles(this)">
+        </div>
+
+        <div id="previewArea" class="grid grid-cols-3 gap-2 mt-2"></div>
+
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded transition mt-4">
+          Đăng bài
+        </button>
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<script>
+
+  //Cho nút "x" xóa ảnh nhanh và xem preview file trước
+
+  let selectedFiles = new DataTransfer(); // Quản lý danh sách file
+
+  function previewFiles(input) {
+      const previewArea = document.getElementById('previewArea');
+
+      // Thêm file mới vào danh sách
+      Array.from(input.files).forEach(file => {
+          selectedFiles.items.add(file);
+          renderPreview(file);
+      });
+
+      // Gán lại danh sách file vào input
+      input.files = selectedFiles.files;
+  }
+
+  function renderPreview(file) {
+      const previewArea = document.getElementById('previewArea');
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+          const div = document.createElement('div');
+          div.className = 'relative group';
+          div.innerHTML = `
+              <img src="${e.target.result}" class="w-full h-20 object-cover rounded shadow-sm">
+              <button type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition">
+                  <i class="fas fa-times"></i>
+              </button>
+          `;
+
+          // Sự kiện xóa
+          div.querySelector('button').onclick = () => {
+              div.remove();
+              // Xóa file khỏi DataTransfer
+              const newFiles = new DataTransfer();
+              Array.from(selectedFiles.files).forEach(f => {
+                  if (f !== file) newFiles.items.add(f);
+              });
+              selectedFiles = newFiles;
+              document.getElementById('fileInput').files = selectedFiles.files;
+          };
+
+          previewArea.appendChild(div);
+      };
+      reader.readAsDataURL(file);
+  }
+
+  //Cài thời gian tắt alert
+  setTimeout(() => {
+        const alerts = document.querySelectorAll('.bg-green-100, .bg-red-100');
+        alerts.forEach(alert => alert.style.display = 'none');
+    }, 3000);
+
+
+  // Disable nút đăng bài khi đang đăng 1 bài
+  const form = document.querySelector('form');
+  const btn = form.querySelector('button[type="submit"]');
+
+  form.addEventListener('submit', () => {
+      btn.disabled = true;
+      btn.innerText = 'Đang đăng...';
+  });
+
+</script>
+</body>
+</html>

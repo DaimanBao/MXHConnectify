@@ -1,0 +1,55 @@
+<div th:fragment="editProfileModal" id="editProfileModal" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-[500px] rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+
+        <div class="border-b border-gray-200 p-4 flex justify-between items-center bg-gray-50">
+            <h3 class="font-bold text-gray-800 text-base">Chỉnh sửa trang cá nhân</h3>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-xl font-semibold focus:outline-none">&times;</button>
+        </div>
+
+        <form th:action="@{/profile/edit}" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block">Họ và tên</label>
+                <input type="text" name="fullName" th:value="${user.fullName}" placeholder="Nhập họ và tên đầy đủ..."
+                       class="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-gray-400 transition">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block">Headline (Thành tựu / Trường học)</label>
+                <input type="text" name="headline" th:value="${user.headline}" placeholder="Ví dụ: Kỹ sư Phần mềm • Đại học Quy Nhơn"
+                       class="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-gray-400 transition">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block">Mô tả tiểu sử (Description)</label>
+                <textarea name="description" th:text="${user.description}" rows="3" placeholder="Viết một chút mô tả về bản thân bạn..."
+                          class="w-full border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-gray-400 transition resize-none"></textarea>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block">Liên kết cộng đồng (Mỗi link 1 hàng)</label>
+
+                <div class="flex space-x-2">
+                    <input type="text" id="linkInput" placeholder="Ví dụ: github.com/username"
+                           class="flex-1 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gray-400 transition">
+                    <button type="button" onclick="addLinkFromInput()" class="bg-gray-800 hover:bg-black text-white text-xs font-semibold px-4 rounded-lg transition">
+                        Thêm
+                    </button>
+                </div>
+
+                <div id="linksContainer" class="space-y-1.5 pt-2 max-h-[160px] overflow-y-auto"></div>
+
+                <input type="hidden" name="communityLinks" id="finalLinksInput">
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">
+                    Hủy bỏ
+                </button>
+                <button type="submit" onclick="prepareSubmitData()" class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition shadow-sm">
+                    Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

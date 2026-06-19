@@ -17,13 +17,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Tắt CSRF bảo vệ để dễ test API (Postman/Frontend)
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Cho phép tất cả các request đi qua không cần đăng nhập
+                        // Cho phép tất cả mọi thứ đi qua lớp Security
+                        // Để nhiệm vụ kiểm tra "đã đăng nhập chưa" cho AuthInterceptor lo liệu
+                        .anyRequest().permitAll()
                 )
-                .formLogin(form -> form.disable()) // Tắt form login mặc định trong hình của bạn
-                .httpBasic(basic -> basic.disable()); // Tắt luôn cổng đăng nhập basic qua popup browser
-
+                // Tắt hẳn form login của Spring Security để không xung đột với AuthController
+                .formLogin(form -> form.disable())
+                .logout(logout -> logout.disable()); // thêm dòng này
         return http.build();
     }
 }
