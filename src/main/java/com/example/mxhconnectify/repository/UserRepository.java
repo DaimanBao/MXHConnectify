@@ -31,6 +31,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByForgotPasswordToken(String token);
 
+    @Query("SELECT f.following FROM Follow f WHERE f.follower.id = :currentUserId")
+    List<User> findFollowingUsersByCurrentId(@Param("currentUserId") Long currentUserId);
 
     @Query(value = "SELECT * FROM users u " +
             "WHERE u.id != :currentUserId " +

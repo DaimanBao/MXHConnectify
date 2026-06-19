@@ -249,4 +249,17 @@ public class UserService {
         user.setAvatarUrl("/avatar_uploads/" + fileName);
         userRepository.save(user);
     }
+
+    public List<SearchUserDTO> getFollowingUsers(Long currentUserId) {
+        // Chúng ta viết một query lấy từ UserRepository hoặc tận dụng mapping thông qua User ID
+        return userRepository.findFollowingUsersByCurrentId(currentUserId)
+                .stream()
+                .map(user -> SearchUserDTO.builder()
+                        .username(user.getUsername())
+                        .fullName(user.getFullName())
+                        .avatarUrl(user.getAvatarUrl())
+                        .isFollowing(true) // Chắc chắn là true vì là danh sách đang theo dõi
+                        .build())
+                .collect(Collectors.toList());
+    }
 }

@@ -1,56 +1,64 @@
 package com.example.mxhconnectify.controller;
 
+import com.example.mxhconnectify.dto.SearchUserDTO;
 import com.example.mxhconnectify.entity.Post;
 import com.example.mxhconnectify.entity.User;
 import com.example.mxhconnectify.service.PostService;
+import com.example.mxhconnectify.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/home")
 public class HomeController {
 
     private final PostService postService;
+    private final UserService userService;
 
     @Autowired
-    public HomeController(PostService postService) {
+    public HomeController(PostService postService,  UserService userService) {
         this.postService = postService;
+        this.userService = userService;
     }
 
     @GetMapping
     public String home(HttpServletRequest request,
                        @RequestParam(defaultValue = "0") int page,
                        Model model) {
-        // 1. Lấy session từ request hiện tại
         HttpSession session = request.getSession(false);
-
-        // 2. Kiểm tra nếu chưa đăng nhập thì bắt quay về trang login
         if (session == null || session.getAttribute("currentUser") == null) {
             return "redirect:/login";
         }
 
-        // 3. Lấy thông tin đối tượng User đang đăng nhập từ Session
         User currentUser = (User) session.getAttribute("currentUser");
 
-        // 4. Gọi Service lấy danh sách bài viết thuộc Home Feed (gồm bài của mình và người mình follow)
-        // Thiết lập kích thước mỗi trang là 5 bài để tối ưu hiệu năng hiển thị bảng tin
+        // 1. Lấy danh sách bài viết Newsfeed
         int pageSize = 5;
         Page<Post> postPage = postService.getHomeFeed(currentUser, page, pageSize);
-
-        // 5. Đẩy dữ liệu danh sách bài viết qua Model sang view Thymeleaf
-        // postPage.getContent() sẽ trả về List<Post> giúp th:each="post : ${posts}" duyệt lặp mượt mà
         model.addAttribute("posts", postPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", postPage.getTotalPages());
 
-        // Trả về file giao diện home.html
+        // 2. Lấy danh sách những người ĐANG THEO DÕI (Dùng cho thanh nằm ngang)
+        List<SearchUserDTO> followingList = userService.getFollowingUsers(currentUser.getId());
+        model.addAttribute("followingUsers", followingList);
+
+        // 3. Lấy danh sách 5 người GỢI Ý NGẪU NHIÊN (Chưa theo dõi - dùng cho thanh dọc)
+        Pageable topFive = PageRequest.of(0, 5);
+        List<SearchUserDTO> suggestionList = userService.getRandomUsers(currentUser.getId(), topFive);
+        model.addAttribute("suggestions", suggestionList);
+
         return "home";
     }
 }
