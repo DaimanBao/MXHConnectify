@@ -4,6 +4,7 @@ package com.example.mxhconnectify.controller;
 import com.example.mxhconnectify.dto.ProfileUpdateDTO;
 import com.example.mxhconnectify.entity.User;
 import com.example.mxhconnectify.service.FollowService;
+import com.example.mxhconnectify.service.PostService;
 import com.example.mxhconnectify.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,13 @@ public class ProfileController {
 
     private final UserService userService;
     private final FollowService followService;
+    private final PostService postService;
 
     @Autowired
-    public ProfileController(UserService userService,  FollowService followService) {
+    public ProfileController(UserService userService,  FollowService followService,  PostService postService) {
         this.userService = userService;
         this.followService = followService;
+        this.postService = postService;
     }
 
     @GetMapping("/{username}")
@@ -48,13 +51,14 @@ public class ProfileController {
             if (currentUser.getId().equals(user.getId())) {
                 isOwner = true;
             } else {
-                // Giao tiếp qua tầng Service chuẩn chỉ
+                // Giao tiếp qua tầng Service
                 isFollowing = followService.isFollowing(currentUser.getId(), user.getId());
             }
         }
 
         long followerCount = followService.getFollowerCount(user.getId());
         long followingCount = followService.getFollowingCount(user.getId());
+        long postCount = postService.getPostCountByUserId(user.getId());
 
         // 4. Đẩy dữ liệu xuống Thymeleaf
         model.addAttribute("user", user);
@@ -62,6 +66,8 @@ public class ProfileController {
         model.addAttribute("isFollowing", isFollowing);
         model.addAttribute("followerCount", followerCount);
         model.addAttribute("followingCount", followingCount);
+        model.addAttribute("postCount", postCount);
+
         return "profile";
     }
 

@@ -81,4 +81,12 @@ public class PostService {
         Pageable pageable = PageRequest.of(page, size);
         return postRepository.findHomeFeed(currentUser.getId(), pageable);
     }
+
+    public long getPostCountByUserId(Long userId) {
+        if (userId == null) return 0;
+        // Tận dụng hàm đếm có sẵn của Spring Data JPA dựa trên thuộc tính của Post
+        // Hoặc bạn có thể dùng postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE)
+        // Hãy kiểm tra các phương thức có sẵn trong PostRepository của bạn, dưới đây là cách viết chuẩn:
+        return postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE);
+    }
 }

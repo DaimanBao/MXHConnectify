@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PostRepository extends JpaRepository<Post,Long> {
+    long countByUser_IdAndParentIdIsNullAndStatus(Long userId, PostStatus status);
+
     // Lấy danh sách bài viết/comment theo parentId (dùng cho feed hoặc load comment)
     Page<Post> findByParentIdAndStatus(Long parentId, PostStatus status, Pageable pageable);
 
@@ -29,4 +31,6 @@ public interface PostRepository extends JpaRepository<Post,Long> {
             "(SELECT f.following.id FROM Follow f WHERE f.follower.id = :currentUserId) " +
             "ORDER BY p.createdAt DESC")
     Page<Post> findExploreFeed(@Param("currentUserId") Long currentUserId, Pageable pageable);
+
+
 }
