@@ -233,7 +233,7 @@
         }
     }
 
-    // Hàm mở Post Detail Modal và nạp toàn bộ cấu trúc dữ liệu giao diện bài viết như trang chủ
+    // ĐÃ SỬA ĐỒNG BỘ: Hàm mở Post Detail Modal truyền dữ liệu lên duy nhất 1 khối Header lớn
     function openPostDetailModal(element) {
         const postId = element.getAttribute('data-post-id');
         const content = element.getAttribute('data-post-content') || '';
@@ -241,7 +241,6 @@
         const isLiked = element.getAttribute('data-post-is-liked') === 'true';
         const isSaved = element.getAttribute('data-post-is-saved') === 'true';
         const postDate = element.getAttribute('data-post-date');
-        const userId = element.getAttribute('data-user-id');
         const username = element.getAttribute('data-user-username');
         const avatarUrl = element.getAttribute('data-user-avatar');
 
@@ -255,50 +254,67 @@
         });
         currentModalMediaIndex = 0;
 
-        // Ánh xạ dữ liệu lên Header & Mô tả của Modal
-        document.getElementById('modal-user-avatar').src = avatarUrl;
-        document.getElementById('modal-caption-avatar').src = avatarUrl;
-        document.getElementById('modal-user-username').innerText = username;
-        document.getElementById('modal-caption-username').innerText = username;
-        document.getElementById('modal-post-content').innerText = content;
-        document.getElementById('modal-like-count').innerText = `${likeCount} lượt thích`;
+        // Điền dữ liệu vào duy nhất khối Header Lớn (đã bỏ các ID caption thừa gây lỗi)
+        const modalUserAvatar = document.getElementById('modal-user-avatar');
+        if (modalUserAvatar) modalUserAvatar.src = avatarUrl;
 
-        if (postDate) {
+        const modalUserUsername = document.getElementById('modal-user-username');
+        if (modalUserUsername) modalUserUsername.innerText = username;
+
+        const modalPostContent = document.getElementById('modal-post-content');
+        if (modalPostContent) modalPostContent.innerText = content;
+
+        const modalLikeCount = document.getElementById('modal-like-count');
+        if (modalLikeCount) modalLikeCount.innerText = `${likeCount} lượt thích`;
+
+        const modalPostDate = document.getElementById('modal-post-date');
+        if (modalPostDate && postDate) {
             try {
                 const dateObj = new Date(postDate);
-                document.getElementById('modal-post-date').innerText = dateObj.toLocaleDateString('vi-VN');
+                modalPostDate.innerText = dateObj.toLocaleDateString('vi-VN');
             } catch(e) {
-                document.getElementById('modal-post-date').innerText = postDate;
+                modalPostDate.innerText = postDate;
             }
         }
 
         // Cài đặt nút LIKE AJAX
         const likeBtn = document.getElementById('modal-like-btn');
-        likeBtn.setAttribute('onclick', `toggleLikeInModal(this, '${postId}')`);
-        likeBtn.querySelector('i').className = isLiked ? "fa-solid fa-heart text-red-500" : "fa-regular fa-heart";
-
-        // Cài đặt nút SAVE AJAX (Quy tắc: Ẩn nút nếu bài viết thuộc về chính mình đang xem)
-        const saveBtn = document.getElementById('modal-save-btn');
-        const isProfileOwner = [[${isOwner}]];
-
-        if (element.closest('#profile-posts-container') && isProfileOwner) {
-            saveBtn.classList.add('hidden');
-        } else {
-            saveBtn.classList.remove('hidden');
-            saveBtn.setAttribute('onclick', `toggleSaveInModal(this, '${postId}')`);
-            saveBtn.querySelector('i').className = isSaved ? "fa-solid fa-bookmark text-black" : "fa-regular fa-bookmark";
+        if (likeBtn) {
+            likeBtn.setAttribute('onclick', `toggleLikeInModal(this, '${postId}')`);
+            likeBtn.querySelector('i').className = isLiked ? "fa-solid fa-heart text-red-500" : "fa-regular fa-heart";
         }
 
-        // Tiến hành dựng hiển thị Slide Media
+        // Cài đặt nút SAVE AJAX
+        const saveBtn = document.getElementById('modal-save-btn');
+        if (saveBtn) {
+            const isProfileOwner = [[${isOwner}]];
+            if (element.closest('#profile-posts-container') && isProfileOwner) {
+                saveBtn.classList.add('hidden');
+            } else {
+                saveBtn.classList.remove('hidden');
+                saveBtn.setAttribute('onclick', `toggleSaveInModal(this, '${postId}')`);
+                saveBtn.querySelector('i').className = isSaved ? "fa-solid fa-bookmark text-black" : "fa-regular fa-bookmark";
+            }
+        }
+
+        // Gọi AJAX để load bình luận từ server đổ vào vùng cuộn mượt
+        if (typeof loadModalComments === 'function') {
+            loadModalComments(postId);
+        }
+
+        // Tiến hành dựng hiển thị Slide Media bên cột trái
         renderModalMedia();
 
         // Mở Modal kèm hiệu ứng mượt mà
         const modal = document.getElementById('post-detail-modal');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            modal.querySelector('div').classList.remove('scale-95');
-        }, 50);
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                const innerDiv = modal.querySelector('div');
+                if (innerDiv) innerDiv.classList.remove('scale-95');
+            }, 50);
+        }
     }
 
     // Hàm dựng và trình chiếu Media (Ảnh/Video) bên trái Modal bài đăng
@@ -306,12 +322,13 @@
         const container = document.getElementById('modal-media-container');
         const prevBtn = document.getElementById('modal-media-prev');
         const nextBtn = document.getElementById('modal-media-next');
+        if (!container) return;
         container.innerHTML = '';
 
         if (currentModalMediaList.length === 0) {
             container.innerHTML = `<img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500" class="w-full h-full object-cover">`;
-            prevBtn.classList.add('hidden');
-            nextBtn.classList.add('hidden');
+            if (prevBtn) prevBtn.classList.add('hidden');
+            if (nextBtn) nextBtn.classList.add('hidden');
             return;
         }
 
@@ -323,24 +340,35 @@
         }
 
         // Xử lý ẩn/hiện nút điều hướng mũi tên Slide
-        if (currentModalMediaIndex > 0) prevBtn.classList.remove('hidden');
-        else prevBtn.classList.add('hidden');
+        if (prevBtn) {
+            if (currentModalMediaIndex > 0) prevBtn.classList.remove('hidden');
+            else prevBtn.classList.add('hidden');
+        }
 
-        if (currentModalMediaIndex < currentModalMediaList.length - 1) nextBtn.classList.remove('hidden');
-        else nextBtn.classList.add('hidden');
+        if (nextBtn) {
+            if (currentModalMediaIndex < currentModalMediaList.length - 1) nextBtn.classList.remove('hidden');
+            else nextBtn.classList.add('hidden');
+        }
 
-        prevBtn.onclick = (e) => { e.stopPropagation(); if(currentModalMediaIndex > 0) { currentModalMediaIndex--; renderModalMedia(); } };
-        nextBtn.onclick = (e) => { e.stopPropagation(); if(currentModalMediaIndex < currentModalMediaList.length - 1) { currentModalMediaIndex++; renderModalMedia(); } };
+        if (prevBtn) {
+            prevBtn.onclick = (e) => { e.stopPropagation(); if(currentModalMediaIndex > 0) { currentModalMediaIndex--; renderModalMedia(); } };
+        }
+        if (nextBtn) {
+            nextBtn.onclick = (e) => { e.stopPropagation(); if(currentModalMediaIndex < currentModalMediaList.length - 1) { currentModalMediaIndex++; renderModalMedia(); } };
+        }
     }
 
     // Hàm đóng Modal chi tiết bài viết và dọn sạch vùng media (tránh nhạc video chạy ngầm)
     function closePostDetailModal() {
         const modal = document.getElementById('post-detail-modal');
+        if (!modal) return;
         modal.classList.add('opacity-0');
-        modal.querySelector('div').classList.add('scale-95');
+        const innerDiv = modal.querySelector('div');
+        if (innerDiv) innerDiv.classList.add('scale-95');
         setTimeout(() => {
             modal.classList.add('hidden');
-            document.getElementById('modal-media-container').innerHTML = '';
+            const container = document.getElementById('modal-media-container');
+            if (container) container.innerHTML = '';
         }, 300);
     }
 
@@ -355,9 +383,8 @@
             const data = await response.json();
             if (data.success) {
                 heartIcon.className = data.liked ? "fa-solid fa-heart text-red-500 animate-scale-up" : "fa-regular fa-heart";
-                likeCountTxt.innerText = `${data.likeCount} lượt thích`;
+                if (likeCountTxt) likeCountTxt.innerText = `${data.likeCount} lượt thích`;
 
-                // Trải nghiệm tinh tế: Tải lại trang sau khi tương tác ở modal để đồng bộ lưới bài viết phía sau
                 setTimeout(() => { window.location.reload(); }, 500);
             }
         } catch (e) { console.error("Lỗi tương tác Like tại Modal:", e); }

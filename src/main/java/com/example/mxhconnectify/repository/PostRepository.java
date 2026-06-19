@@ -2,8 +2,10 @@ package com.example.mxhconnectify.repository;
 
 import com.example.mxhconnectify.entity.Post;
 import com.example.mxhconnectify.enums.PostStatus;
+import com.example.mxhconnectify.enums.PostType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +36,17 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     Page<Post> findExploreFeed(@Param("currentUserId") Long currentUserId, Pageable pageable);
 
     List<Post> findByUser_IdAndParentIdIsNullAndStatusOrderByCreatedAtDesc(Long userId, PostStatus status);
+
+
+    /**
+     * 1. Lấy TẤT CẢ các bình luận cấp 1 (COMMENT) thuộc về một bài viết gốc (POST).
+     * Sắp xếp theo thời gian tạo: Bình luận cũ ở trên, bình luận mới ở dưới (hoặc ngược lại tùy bạn, thông thường là cũ trước mới sau).
+     */
+    List<Post> findByParentIdAndTypeAndStatusOrderByCreatedAtAsc(Long parentId, PostType type, PostStatus status);
+
+    /**
+     * 2. Lấy danh sách các câu phản hồi (REPLY) thuộc về một bình luận gốc (COMMENT) dưới dạng PHÂN TRANG (Slice).
+     * Mỗi lần bấm "Xem thêm", Frontend sẽ truyền số trang lên để lấy cụm tiếp theo.
+     */
+    Slice<Post> findByParentIdAndTypeAndStatusOrderByCreatedAtAsc(Long parentId, PostType type, PostStatus status, Pageable pageable);
 }

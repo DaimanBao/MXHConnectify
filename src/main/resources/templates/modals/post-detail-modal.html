@@ -23,51 +23,304 @@
 
     <div class="w-full md:w-[40%] flex flex-col h-full bg-white border-l border-gray-100">
 
-      <div class="p-3 border-b border-gray-100 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <img id="modal-user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-gray-200" alt="Avatar">
-          <span id="modal-user-username" class="font-bold text-sm text-gray-900 hover:underline cursor-pointer">username</span>
+      <div class="p-4 border-b border-gray-100 flex items-start space-x-3 text-sm text-gray-800 shrink-0 bg-white relative">
+        <img id="modal-user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" alt="Avatar">
+
+        <div class="flex-1 pr-6">
+          <div class="block">
+            <span id="modal-user-username" class="font-bold text-gray-900 hover:underline cursor-pointer mr-2">username</span>
+            <span id="modal-post-content" class="text-gray-800 break-words">Nội dung caption bài viết...</span>
+          </div>
+          <p id="modal-post-date" class="text-[10px] text-gray-400 uppercase tracking-wide mt-2">1 ngày trước</p>
         </div>
-        <button class="text-gray-700 hover:text-gray-400"><i class="fa-solid fa-ellipsis"></i></button>
+
+        <button class="text-gray-400 hover:text-gray-700 absolute top-4 right-4 focus:outline-none">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
       </div>
 
-      <div class="flex-1 p-3 overflow-y-auto space-y-3 text-sm text-gray-800">
-        <div class="flex items-start space-x-3">
-          <img id="modal-caption-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-gray-100" alt="Avatar">
-          <div>
-            <span id="modal-caption-username" class="font-bold mr-2 text-gray-900">username</span>
-            <span id="modal-post-content">Nội dung caption bài viết...</span>
-            <p id="modal-post-date" class="text-[10px] text-gray-400 uppercase tracking-wide mt-2">1 ngày trước</p>
-          </div>
-        </div>
-        <div id="modal-comments-box" class="space-y-3 mt-4 pt-4 border-t border-gray-50">
+      <div id="modal-comments-scroll-zone" class="flex-1 p-3 overflow-y-auto bg-white">
+        <div id="modal-comments-box" class="space-y-4 pb-4">
         </div>
       </div>
 
-      <div class="p-3 border-t border-gray-100 space-y-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-4 text-xl">
-            <button id="modal-like-btn" onclick="" class="hover:scale-110 transition duration-200 text-gray-700">
-              <i class=""></i>
-            </button>
-            <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
-          </div>
-          <button id="modal-save-btn" onclick="" class="text-xl hover:scale-110 transition duration-200 text-gray-700">
-            <i class=""></i>
+      <div class="shrink-0 bg-white px-3">
+        <div id="reply-status-bar" class="hidden flex items-center justify-between py-1.5 px-2 bg-blue-50 text-blue-700 text-xs font-medium rounded-t-md mt-1">
+          <span id="reply-status-text">Đang trả lời...</span>
+          <button onclick="cancelReplyState()" class="text-blue-400 hover:text-blue-700 focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div id="image-preview-container" class="hidden relative w-14 h-14 my-2 border border-gray-200 rounded-md overflow-hidden group">
+          <img id="image-preview-element" src="" class="w-full h-full object-cover">
+          <button onclick="clearImageCommentInput()" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 text-white transition-opacity duration-150 focus:outline-none">
+            <i class="fa-solid fa-trash-can text-xs"></i>
           </button>
         </div>
+      </div>
 
+      <div class="p-3 border-t border-gray-100 space-y-2 shrink-0 bg-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center text-xl">
+            <button id="modal-like-btn" onclick="" class="hover:scale-110 transition duration-200 text-gray-700 focus:outline-none">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </div>
+          <button id="modal-save-btn" onclick="" class="text-xl hover:scale-110 transition duration-200 text-gray-700 focus:outline-none">
+            <i class="fa-regular fa-bookmark"></i>
+          </button>
+        </div>
         <p id="modal-like-count" class="font-semibold text-sm text-gray-900">0 lượt thích</p>
       </div>
 
-      <div class="p-3 border-t border-gray-100 flex items-center space-x-2 bg-gray-50">
-        <button class="text-xl text-gray-700"><i class="fa-regular fa-face-smile"></i></button>
-        <input type="text" placeholder="Thêm bình luận..." class="w-full text-sm bg-transparent border-none focus:outline-none focus:ring-0 text-gray-700" disabled>
-        <button class="text-blue-500 font-semibold text-sm opacity-50 cursor-default" disabled>Đăng</button>
+      <div class="p-3 border-t border-gray-100 flex items-center space-x-2 bg-gray-50 shrink-0">
+        <button class="text-xl text-gray-700 flex items-center focus:outline-none"><i class="fa-regular fa-face-smile"></i></button>
+
+        <label class="text-xl text-gray-500 hover:text-blue-500 transition cursor-pointer flex items-center select-none">
+          <i class="fa-regular fa-image"></i>
+          <input type="file" id="comment-image-input" accept="image/*" class="hidden" onchange="previewCommentImage(this)">
+        </label>
+
+        <input type="text" id="comment-text-input" placeholder="Thêm bình luận..." class="w-full text-sm bg-transparent border-none focus:outline-none focus:ring-0 text-gray-700">
+
+        <button onclick="submitCommentOrReply()" class="text-blue-500 font-semibold text-sm hover:text-blue-700 transition focus:outline-none">Đăng</button>
       </div>
 
     </div>
   </div>
 </div>
+
+<script th:inline="javascript">
+  let activePostId = null;
+  let activeParentCommentId = null;
+
+  function loadModalComments(postId) {
+      activePostId = postId;
+      cancelReplyState();
+      clearImageCommentInput();
+
+      const container = document.getElementById('modal-comments-box');
+      container.innerHTML = `<div class="text-center py-4 text-gray-400 text-xs"><i class="fa-solid fa-circle-notch animate-spin mr-2"></i>Đang tải bình luận...</div>`;
+
+      fetch(`/api/comments/post/${postId}`)
+          .then(res => res.json())
+          .then(comments => {
+              container.innerHTML = '';
+              if (comments.length === 0) {
+                  container.innerHTML = `<p class="text-center py-6 text-xs text-gray-400 select-none">Chưa có bình luận nào. Hãy là người đầu tiên!</p>`;
+                  return;
+              }
+              comments.forEach(comment => {
+                  container.appendChild(createCommentNodeHTML(comment));
+              });
+          })
+          .catch(err => console.error("Lỗi lấy danh sách bình luận:", err));
+  }
+
+  /**
+   * Sinh cây HTML hiển thị cho một Bình luận gốc (Comment cấp 1)
+   */
+  function createCommentNodeHTML(comment) {
+      const div = document.createElement('div');
+      div.className = "space-y-2 pt-1";
+      div.id = `comment-wrapper-${comment.id}`;
+
+      let mediaHTML = '';
+      if (comment.mediaList && comment.mediaList.length > 0) {
+          mediaHTML = `<div><img src="${comment.mediaList[0].url}" class="mt-2 max-w-[140px] max-h-[140px] rounded-lg border border-gray-100 object-cover cursor-pointer hover:opacity-90"></div>`;
+      }
+
+      let heartClass = comment.isLiked ? "fa-solid fa-heart text-red-500 scale-110" : "fa-regular fa-heart";
+
+      let viewMoreBtnHTML = '';
+      if (comment.type === 'COMMENT' && comment.commentCount && comment.commentCount > 0) {
+          viewMoreBtnHTML = `
+              <button onclick="loadMoreReplies('${comment.id}', 0)" class="text-[11px] font-bold text-gray-500 hover:text-black py-1 focus:outline-none flex items-center space-x-2">
+                  <span class="inline-block w-6 border-t border-gray-300 mr-1"></span>
+                  <span>Xem câu trả lời (${comment.commentCount})</span>
+              </button>
+          `;
+      }
+
+      div.innerHTML = `
+          <div class="flex items-start justify-between group/item">
+              <div class="flex items-start space-x-3 pr-2">
+                  <img src="${comment.user.avatarUrl ? comment.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100">
+                  <div class="text-sm">
+                      <span class="font-bold text-gray-900 mr-2">${comment.user.username}</span>
+                      <span class="text-gray-800 break-words">${comment.content}</span>
+                      ${mediaHTML}
+                      <div class="flex items-center space-x-4 text-[11px] text-gray-400 mt-1 font-medium select-none">
+                          <span>${comment.likeCount || 0} lượt thích</span>
+                          <button onclick="setReplyToUser('${comment.id}', '${comment.user.username}')" class="hover:text-black font-semibold focus:outline-none">Trả lời</button>
+                      </div>
+                  </div>
+              </div>
+              <button onclick="toggleLikeInModal(this, '${comment.id}')" class="text-gray-400 hover:text-red-500 text-xs p-1 mt-1 focus:outline-none shrink-0">
+                  <i class="${heartClass}"></i>
+              </button>
+          </div>
+          <div id="replies-box-${comment.id}" class="ml-11 space-y-3 border-l-2 border-gray-100 pl-3 hidden"></div>
+          <div id="more-replies-btn-zone-${comment.id}" class="ml-11 select-none">${viewMoreBtnHTML}</div>
+      `;
+
+      return div;
+  }
+  /**
+   * Tạo cấu trúc nút chữ "Xem thêm câu trả lời" có phân trang khi tải các trang tiếp theo (page > 0)
+   */
+  function renderViewMoreRepliesButton(commentId, page) {
+      const zone = document.getElementById(`more-replies-btn-zone-${commentId}`);
+      if (!zone) return;
+
+      zone.innerHTML = `
+          <button onclick="loadMoreReplies('${commentId}', ${page})" class="text-[11px] font-bold text-gray-500 hover:text-black py-1 focus:outline-none flex items-center space-x-2">
+              <span class="inline-block w-6 border-t border-gray-300 mr-1"></span>
+              <span>Xem thêm câu trả lời khác</span>
+          </button>
+      `;
+  }
+
+  function loadMoreReplies(commentId, page) {
+      const repliesBox = document.getElementById(`replies-box-${commentId}`);
+      const zone = document.getElementById(`more-replies-btn-zone-${commentId}`);
+
+      if(repliesBox) repliesBox.classList.remove('hidden');
+
+      fetch(`/api/comments/comment/${commentId}/replies?page=${page}&size=3`)
+          .then(res => res.json())
+          .then(data => {
+              if(zone) zone.innerHTML = '';
+
+              data.replies.forEach(reply => {
+                  const repDiv = document.createElement('div');
+                  repDiv.className = "flex items-start justify-between group/rep pt-1";
+
+                  let mediaHTML = (reply.mediaList && reply.mediaList.length > 0) ? `<div><img src="${reply.mediaList[0].url}" class="mt-2 max-w-[100px] max-h-[100px] rounded-lg object-cover"></div>` : '';
+                  let heartClass = reply.isLiked ? "fa-solid fa-heart text-red-500" : "fa-regular fa-heart";
+
+                  repDiv.innerHTML = `
+                      <div class="flex items-start space-x-3 pr-2 w-full">
+                          <img src="${reply.user.avatarUrl ? reply.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="w-6 h-6 rounded-full object-cover shrink-0 border border-gray-100">
+                          <div class="text-sm flex-1 min-w-0">
+                              <span class="font-bold text-gray-900 mr-1 hover:underline cursor-pointer">${reply.user.username}</span>
+                              <span class="text-gray-800 break-words">${reply.content}</span>
+                              ${mediaHTML}
+                              <div class="flex items-center space-x-3 text-[10px] text-gray-400 mt-0.5 font-medium select-none">
+                                  <span>${reply.likeCount || 0} thích</span>
+                                  <button onclick="setReplyToUser('${commentId}', '${reply.user.username}')" class="hover:text-black font-semibold focus:outline-none">Trả lời</button>
+                              </div>
+                          </div>
+                      </div>
+                      <button onclick="toggleLikeInModal(this, '${reply.id}')" class="text-gray-400 hover:text-red-500 text-[10px] p-1 focus:outline-none shrink-0">
+                          <i class="${heartClass}"></i>
+                      </button>
+                  `;
+                  repliesBox.appendChild(repDiv);
+              });
+
+              if (data.hasNext) {
+                  renderViewMoreRepliesButton(commentId, data.currentPage + 1);
+              }
+          })
+          .catch(err => console.error("Lỗi tải các phản hồi:", err));
+  }
+
+  function setReplyToUser(commentId, username) {
+      activeParentCommentId = commentId;
+
+      const statusBar = document.getElementById('reply-status-bar');
+      const statusText = document.getElementById('reply-status-text');
+      const textInput = document.getElementById('comment-text-input');
+
+      statusText.innerText = `Đang trả lời @${username}...`;
+      statusBar.classList.remove('hidden');
+
+      textInput.value = `@${username} `;
+      textInput.focus();
+  }
+
+  function cancelReplyState() {
+      activeParentCommentId = null;
+      const statusBar = document.getElementById('reply-status-bar');
+      if(statusBar) statusBar.classList.add('hidden');
+  }
+
+  function previewCommentImage(input) {
+      const file = input.files[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              document.getElementById('image-preview-element').src = e.target.result;
+              document.getElementById('image-preview-container').classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+      }
+  }
+
+  function clearImageCommentInput() {
+      document.getElementById('comment-image-input').value = "";
+      document.getElementById('image-preview-container').classList.add('hidden');
+      document.getElementById('image-preview-element').src = "";
+  }
+
+  function submitCommentOrReply() {
+      const textInput = document.getElementById('comment-text-input');
+      const fileInput = document.getElementById('comment-image-input');
+      const contentValue = textInput.value.trim();
+
+      if (contentValue === "" && (!fileInput.files || fileInput.files.length === 0)) {
+          return;
+      }
+
+      const formData = new FormData();
+      formData.append("postId", activePostId);
+      formData.append("content", contentValue);
+
+      if (activeParentCommentId) {
+          formData.append("parentId", activeParentCommentId);
+      }
+      if (fileInput.files && fileInput.files[0]) {
+          formData.append("imageFile", fileInput.files[0]);
+      }
+
+      fetch('/api/comments/create', {
+          method: 'POST',
+          body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+          if (data.success) {
+              textInput.value = "";
+              clearImageCommentInput();
+
+              if (activeParentCommentId) {
+                  const repliesBox = document.getElementById(`replies-box-${activeParentCommentId}`);
+                  if(repliesBox) {
+                      repliesBox.classList.remove('hidden');
+                      repliesBox.innerHTML = '';
+                  }
+                  loadMoreReplies(activeParentCommentId, 0);
+                  cancelReplyState();
+              } else {
+                  const container = document.getElementById('modal-comments-box');
+                  const newNode = createCommentNodeHTML(data);
+
+                  if(container.querySelector('p')) container.innerHTML = '';
+
+                  container.appendChild(newNode);
+
+                  const scrollZone = document.getElementById('modal-comments-scroll-zone');
+                  scrollZone.scrollTo({
+                      top: scrollZone.scrollHeight,
+                      behavior: 'smooth'
+                  });
+              }
+          } else {
+              alert(data.message || "Không thể đăng bình luận");
+          }
+      })
+      .catch(err => console.error("Lỗi gửi dữ liệu bình luận:", err));
+  }
+</script>
 </body>
 </html>
