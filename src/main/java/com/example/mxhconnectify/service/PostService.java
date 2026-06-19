@@ -83,15 +83,35 @@ public class PostService {
         Page<Post> homeFeed = postRepository.findHomeFeed(currentUser.getId(), pageable);
 
         // VỚI MỖI BÀI VIẾT TRÊN NEWFEED: Quét tìm bình luận tiêu biểu có nhiều like nhất
-        if (homeFeed != null && homeFeed.hasContent()) {
-            homeFeed.getContent().forEach(post -> {
-                // Tìm kiếm comment cấp 1 nhiều like nhất từ repo
+        attachFeaturedComments(homeFeed);
+
+        return homeFeed;
+    }
+
+    /**
+     * Lấy danh sách bài viết cho trang KHÁM PHÁ: chỉ lấy post của những người
+     * mà currentUser CHƯA theo dõi (và không phải chính mình).
+     */
+    public Page<Post> getExploreFeed(User currentUser, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Post> exploreFeed = postRepository.findExploreFeed(currentUser.getId(), pageable);
+
+        // Tương tự Home Feed: gắn bình luận tiêu biểu (nhiều like nhất) cho mỗi bài viết
+        attachFeaturedComments(exploreFeed);
+
+        return exploreFeed;
+    }
+
+    /**
+     * Hàm bổ trợ: quét và gắn bình luận có nhiều like nhất cho từng bài viết trong 1 trang kết quả.
+     */
+    private void attachFeaturedComments(Page<Post> postPage) {
+        if (postPage != null && postPage.hasContent()) {
+            postPage.getContent().forEach(post -> {
                 postRepository.findTopFeaturedCommentByPostId(post.getId())
                         .ifPresent(comment -> post.setFeaturedComment(comment));
             });
         }
-
-        return homeFeed;
     }
 
     public Optional<Post> findById(Long id) {
@@ -100,9 +120,7 @@ public class PostService {
 
     public long getPostCountByUserId(Long userId) {
         if (userId == null) return 0;
-        // Tận dụng hàm đếm có sẵn của Spring Data JPA dựa trên thuộc tính của Post
-        // Hoặc bạn có thể dùng postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE)
-        // Hãy kiểm tra các phương thức có sẵn trong PostRepository của bạn, dưới đây là cách viết chuẩn:
+
         return postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE);
     }
 
