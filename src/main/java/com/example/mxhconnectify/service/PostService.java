@@ -80,7 +80,22 @@ public class PostService {
 
     public Page<Post> getHomeFeed(User currentUser, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return postRepository.findHomeFeed(currentUser.getId(), pageable);
+        Page<Post> homeFeed = postRepository.findHomeFeed(currentUser.getId(), pageable);
+
+        // VỚI MỖI BÀI VIẾT TRÊN NEWFEED: Quét tìm bình luận tiêu biểu có nhiều like nhất
+        if (homeFeed != null && homeFeed.hasContent()) {
+            homeFeed.getContent().forEach(post -> {
+                // Tìm kiếm comment cấp 1 nhiều like nhất từ repo
+                postRepository.findTopFeaturedCommentByPostId(post.getId())
+                        .ifPresent(comment -> post.setFeaturedComment(comment));
+            });
+        }
+
+        return homeFeed;
+    }
+
+    public Optional<Post> findById(Long id) {
+        return postRepository.findById(id);
     }
 
     public long getPostCountByUserId(Long userId) {

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post,Long> {
     long countByUser_IdAndParentIdIsNullAndStatus(Long userId, PostStatus status);
@@ -49,4 +50,12 @@ public interface PostRepository extends JpaRepository<Post,Long> {
      * Mỗi lần bấm "Xem thêm", Frontend sẽ truyền số trang lên để lấy cụm tiếp theo.
      */
     Slice<Post> findByParentIdAndTypeAndStatusOrderByCreatedAtAsc(Long parentId, PostType type, PostStatus status, Pageable pageable);
+
+    /**
+     * Tìm bình luận cấp 1 có lượt thích cao nhất thuộc về một bài viết chính.
+     */
+    @Query(value = "SELECT * FROM posts p WHERE p.parent_id = :postId " +
+            "AND p.type = 'COMMENT' AND p.status = 'ENABLE' " +
+            "ORDER BY p.like_count DESC LIMIT 1", nativeQuery = true)
+    Optional<Post> findTopFeaturedCommentByPostId(@Param("postId") Long postId);
 }

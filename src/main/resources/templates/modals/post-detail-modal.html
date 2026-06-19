@@ -24,14 +24,14 @@
     <div class="w-full md:w-[40%] flex flex-col h-full bg-white border-l border-gray-100">
 
       <div class="p-4 border-b border-gray-100 flex items-start space-x-3 text-sm text-gray-800 shrink-0 bg-white relative">
-        <img id="modal-user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" alt="Avatar">
+        <img id="modal-user-avatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" alt="Avatar">
 
         <div class="flex-1 pr-6">
           <div class="block">
             <span id="modal-user-username" class="font-bold text-gray-900 hover:underline cursor-pointer mr-2">username</span>
-            <span id="modal-post-content" class="text-gray-800 break-words">Nội dung caption bài viết...</span>
+            <span id="modal-post-content" class="text-gray-800 break-words">Đang tải...</span>
           </div>
-          <p id="modal-post-date" class="text-[10px] text-gray-400 uppercase tracking-wide mt-2">1 ngày trước</p>
+          <p id="modal-post-date" class="text-[10px] text-gray-400 uppercase tracking-wide mt-2"></p>
         </div>
 
         <button class="text-gray-400 hover:text-gray-700 absolute top-4 right-4 focus:outline-none">
@@ -61,11 +61,11 @@
       <div class="p-3 border-t border-gray-100 space-y-2 shrink-0 bg-white">
         <div class="flex items-center justify-between">
           <div class="flex items-center text-xl">
-            <button id="modal-like-btn" onclick="" class="hover:scale-110 transition duration-200 text-gray-700 focus:outline-none">
+            <button id="modal-like-btn" class="hover:scale-110 transition duration-200 text-gray-700 focus:outline-none">
               <i class="fa-regular fa-heart"></i>
             </button>
           </div>
-          <button id="modal-save-btn" onclick="" class="text-xl hover:scale-110 transition duration-200 text-gray-700 focus:outline-none">
+          <button id="modal-save-btn" class="text-xl hover:scale-110 transition duration-200 text-gray-700 focus:outline-none">
             <i class="fa-regular fa-bookmark"></i>
           </button>
         </div>
@@ -92,20 +92,256 @@
 <script th:inline="javascript">
   let activePostId = null;
   let activeParentCommentId = null;
+  let detailMediaIndex = 0;
+  let detailMediaList = [];
 
+  // =============================================
+  // MỞ / ĐÓNG MODAL CHI TIẾT BÀI VIẾT
+  // =============================================
+  function openPostDetailModal(postId) {
+      activePostId = postId;
+
+      const modal = document.getElementById('post-detail-modal');
+      if (!modal) return;
+
+      // Reset toàn bộ UI về trạng thái chờ tải dữ liệu
+      document.getElementById('modal-user-avatar').src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+      document.getElementById('modal-user-username').innerText = '...';
+      document.getElementById('modal-post-content').innerText = 'Đang tải...';
+      document.getElementById('modal-post-date').innerText = '';
+      document.getElementById('modal-like-count').innerText = '0 lượt thích';
+      document.getElementById('modal-comments-box').innerHTML =
+          `<div class="text-center py-4 text-gray-400 text-xs"><i class="fa-solid fa-circle-notch animate-spin mr-2"></i>Đang tải bình luận...</div>`;
+      document.getElementById('modal-media-container').innerHTML = '';
+      document.getElementById('modal-media-prev').classList.add('hidden');
+      document.getElementById('modal-media-next').classList.add('hidden');
+
+      // Kích hoạt hiệu ứng hiển thị Modal mượt mà
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+          modal.classList.remove('opacity-0');
+          modal.querySelector('div').classList.remove('scale-95');
+      }, 10);
+
+      // Thực hiện Fetch API lấy cấu trúc JSON chi tiết bài viết từ PostRestController
+      fetch(`/api/posts/${postId}`)
+          .then(res => {
+              if (!res.ok) throw new Error("Không thể kết nối đến máy chủ lấy thông tin bài viết.");
+              return res.json();
+          })
+          .then(post => {
+              if (!post) return;
+
+              // Đổ thông tin User (Kiểm tra điều kiện an toàn phòng trường hợp đối tượng trống)
+              if (post.user) {
+                  const avatarUrl = post.user.avatarUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                  document.getElementById('modal-user-avatar').src = avatarUrl;
+                  document.getElementById('modal-user-username').innerText = post.user.username || 'Nezumi';
+                  document.getElementById('modal-user-username').onclick = () => {
+                      if (post.user.username) window.location.href = `/profile/${post.user.username}`;
+                  };
+              }
+
+              document.getElementById('modal-post-content').innerText = post.content || '';
+
+              // Định dạng cấu trúc ngày đăng bài viết
+              if (post.createdAt) {
+                  try {
+                      const d = new Date(post.createdAt);
+                      document.getElementById('modal-post-date').innerText =
+                          d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  } catch (e) {
+                      document.getElementById('modal-post-date').innerText = post.createdAt;
+                  }
+              }
+
+              // Số lượt thích & Cấu hình hành vi nút Like trong Modal
+              document.getElementById('modal-like-count').innerText = `${post.likeCount || 0} lượt thích`;
+              const likeBtn = document.getElementById('modal-like-btn');
+              if (likeBtn) {
+                  const likeIcon = likeBtn.querySelector('i');
+                  if (likeIcon) {
+                      likeIcon.className = post.likedByCurrentUser ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart';
+                  }
+                  likeBtn.onclick = () => toggleLikeInModal(likeBtn, postId, true);
+              }
+
+              // Cấu hình trạng thái hiển thị nút Lưu bài viết (Save Bookmark)
+              const saveBtn = document.getElementById('modal-save-btn');
+              if (saveBtn) {
+                  const saveIcon = saveBtn.querySelector('i');
+                  if (saveIcon) {
+                      saveIcon.className = post.savedByCurrentUser ? 'fa-solid fa-bookmark text-black' : 'fa-regular fa-bookmark';
+                  }
+                  saveBtn.onclick = () => toggleSaveInModal(saveBtn, postId);
+              }
+
+              // Gọi hàm hiển thị danh sách Media đính kèm bài viết
+              renderModalMedia(post.mediaList || []);
+          })
+          .catch(err => {
+              console.error('Lỗi tải chi tiết bài viết:', err);
+              document.getElementById('modal-post-content').innerText = 'Không thể tải nội dung bài viết này hoặc bài viết đã bị xóa.';
+          });
+
+      // Gọi API tải danh sách bình luận đi kèm độc lập
+      loadModalComments(postId);
+  }
+
+  function closePostDetailModal() {
+      const modal = document.getElementById('post-detail-modal');
+      if (!modal) return;
+      modal.classList.add('opacity-0');
+      modal.querySelector('div').classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+      activePostId = null;
+      cancelReplyState();
+  }
+
+  // Đính kèm sự kiện click ra vùng viền ngoài đen để đóng nhanh modal
+  document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('post-detail-modal');
+      if (modal) {
+          modal.addEventListener('click', function (e) {
+              if (e.target === modal) closePostDetailModal();
+          });
+      }
+  });
+
+  // =============================================
+  // RENDER MEDIA TRONG MODAL (ảnh / video / slider)
+  // =============================================
+  function renderModalMedia(mediaList) {
+      detailMediaList = mediaList;
+      detailMediaIndex = 0;
+
+      const container = document.getElementById('modal-media-container');
+      const prevBtn = document.getElementById('modal-media-prev');
+      const nextBtn = document.getElementById('modal-media-next');
+
+      if (!container || !prevBtn || !nextBtn) return;
+      container.innerHTML = '';
+
+      if (!mediaList || mediaList.length === 0) {
+          container.innerHTML = '<div class="text-gray-400 text-xs select-none">Không có hình ảnh hoặc video</div>';
+          prevBtn.classList.add('hidden');
+          nextBtn.classList.add('hidden');
+          return;
+      }
+
+      // Render phần tử Media đầu tiên lên màn hình
+      renderMediaAt(0);
+
+      // Cấu hình thanh trượt Slider nếu bài viết sở hữu từ 2 file Media trở lên
+      if (mediaList.length > 1) {
+          prevBtn.classList.remove('hidden');
+          nextBtn.classList.remove('hidden');
+          prevBtn.onclick = () => {
+              detailMediaIndex = (detailMediaIndex - 1 + detailMediaList.length) % detailMediaList.length;
+              renderMediaAt(detailMediaIndex);
+          };
+          nextBtn.onclick = () => {
+              detailMediaIndex = (detailMediaIndex + 1) % detailMediaList.length;
+              renderMediaAt(detailMediaIndex);
+          };
+      } else {
+          prevBtn.classList.add('hidden');
+          nextBtn.classList.add('hidden');
+      }
+  }
+
+  function renderMediaAt(index) {
+      const container = document.getElementById('modal-media-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const media = detailMediaList[index];
+      if (!media) return;
+
+      if (media.type === 'VIDEO') {
+          const video = document.createElement('video');
+          video.src = media.url;
+          video.controls = true;
+          video.className = 'w-full h-full object-contain max-h-full';
+          container.appendChild(video);
+      } else {
+          const img = document.createElement('img');
+          img.src = media.url;
+          img.className = 'w-full h-full object-contain max-h-full';
+          img.alt = 'post media';
+          container.appendChild(img);
+      }
+
+      // Hiển thị số thứ tự ảnh/video góc trên (Ví dụ: 1 / 3)
+      if (detailMediaList.length > 1) {
+          const counter = document.createElement('div');
+          counter.className = 'absolute top-3 right-3 bg-black/60 text-white text-xs font-semibold px-2 py-0.5 rounded-full z-10';
+          counter.innerText = `${index + 1} / ${detailMediaList.length}`;
+          container.style.position = 'relative';
+          container.appendChild(counter);
+      }
+  }
+
+  // =============================================
+  // TOGGLE LIKE / SAVE TRONG MODAL
+  // =============================================
+  async function toggleLikeInModal(button, postId, isMainPost = false) {
+      const icon = button.querySelector('i');
+      if (!icon) return;
+      button.disabled = true;
+      try {
+          const res = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+              if (isMainPost) {
+                  icon.className = data.liked ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart';
+                  const likeCountEl = document.getElementById('modal-like-count');
+                  if (likeCountEl) likeCountEl.innerText = `${data.likeCount} lượt thích`;
+              } else {
+                  icon.className = data.liked ? 'fa-solid fa-heart text-red-500 scale-110' : 'fa-regular fa-heart';
+              }
+          }
+      } catch (err) {
+          console.error('Lỗi khi tương tác Like bài viết:', err);
+      } finally {
+          button.disabled = false;
+      }
+  }
+
+  async function toggleSaveInModal(button, postId) {
+      const icon = button.querySelector('i');
+      if (!icon) return;
+      button.disabled = true;
+      try {
+          const res = await fetch(`/api/posts/${postId}/save`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+              icon.className = data.saved ? 'fa-solid fa-bookmark text-black' : 'fa-regular fa-bookmark';
+          }
+      } catch (err) {
+          console.error('Lỗi khi thực hiện lưu bài viết:', err);
+      } finally {
+          button.disabled = false;
+      }
+  }
+
+  // =============================================
+  // TẢI & SINH CẤU TRÚC BÌNH LUẬN TRONG MODAL
+  // =============================================
   function loadModalComments(postId) {
       activePostId = postId;
       cancelReplyState();
       clearImageCommentInput();
 
       const container = document.getElementById('modal-comments-box');
+      if (!container) return;
       container.innerHTML = `<div class="text-center py-4 text-gray-400 text-xs"><i class="fa-solid fa-circle-notch animate-spin mr-2"></i>Đang tải bình luận...</div>`;
 
       fetch(`/api/comments/post/${postId}`)
           .then(res => res.json())
           .then(comments => {
               container.innerHTML = '';
-              if (comments.length === 0) {
+              if (!comments || comments.length === 0) {
                   container.innerHTML = `<p class="text-center py-6 text-xs text-gray-400 select-none">Chưa có bình luận nào. Hãy là người đầu tiên!</p>`;
                   return;
               }
@@ -113,12 +349,12 @@
                   container.appendChild(createCommentNodeHTML(comment));
               });
           })
-          .catch(err => console.error("Lỗi lấy danh sách bình luận:", err));
+          .catch(err => {
+              console.error("Lỗi tải danh sách bình luận:", err);
+              container.innerHTML = `<p class="text-center py-4 text-xs text-red-400 select-none">Không thể tải bình luận.</p>`;
+          });
   }
 
-  /**
-   * Sinh cây HTML hiển thị cho một Bình luận gốc (Comment cấp 1)
-   */
   function createCommentNodeHTML(comment) {
       const div = document.createElement('div');
       div.className = "space-y-2 pt-1";
@@ -141,17 +377,20 @@
           `;
       }
 
+      const userAvatar = (comment.user && comment.user.avatarUrl) ? comment.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+      const username = (comment.user && comment.user.username) ? comment.user.username : 'Ẩn danh';
+
       div.innerHTML = `
           <div class="flex items-start justify-between group/item">
               <div class="flex items-start space-x-3 pr-2">
-                  <img src="${comment.user.avatarUrl ? comment.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100">
+                  <img src="${userAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100">
                   <div class="text-sm">
-                      <span class="font-bold text-gray-900 mr-2">${comment.user.username}</span>
-                      <span class="text-gray-800 break-words">${comment.content}</span>
+                      <span class="font-bold text-gray-900 mr-2">${username}</span>
+                      <span class="text-gray-800 break-words">${comment.content || ''}</span>
                       ${mediaHTML}
                       <div class="flex items-center space-x-4 text-[11px] text-gray-400 mt-1 font-medium select-none">
                           <span>${comment.likeCount || 0} lượt thích</span>
-                          <button onclick="setReplyToUser('${comment.id}', '${comment.user.username}')" class="hover:text-black font-semibold focus:outline-none">Trả lời</button>
+                          <button onclick="setReplyToUser('${comment.id}', '${username}')" class="hover:text-black font-semibold focus:outline-none">Trả lời</button>
                       </div>
                   </div>
               </div>
@@ -165,9 +404,7 @@
 
       return div;
   }
-  /**
-   * Tạo cấu trúc nút chữ "Xem thêm câu trả lời" có phân trang khi tải các trang tiếp theo (page > 0)
-   */
+
   function renderViewMoreRepliesButton(commentId, page) {
       const zone = document.getElementById(`more-replies-btn-zone-${commentId}`);
       if (!zone) return;
@@ -184,12 +421,13 @@
       const repliesBox = document.getElementById(`replies-box-${commentId}`);
       const zone = document.getElementById(`more-replies-btn-zone-${commentId}`);
 
-      if(repliesBox) repliesBox.classList.remove('hidden');
+      if (repliesBox) repliesBox.classList.remove('hidden');
 
       fetch(`/api/comments/comment/${commentId}/replies?page=${page}&size=3`)
           .then(res => res.json())
           .then(data => {
-              if(zone) zone.innerHTML = '';
+              if (zone) zone.innerHTML = '';
+              if (!data.replies) return;
 
               data.replies.forEach(reply => {
                   const repDiv = document.createElement('div');
@@ -198,16 +436,19 @@
                   let mediaHTML = (reply.mediaList && reply.mediaList.length > 0) ? `<div><img src="${reply.mediaList[0].url}" class="mt-2 max-w-[100px] max-h-[100px] rounded-lg object-cover"></div>` : '';
                   let heartClass = reply.isLiked ? "fa-solid fa-heart text-red-500" : "fa-regular fa-heart";
 
+                  const replyUserAvatar = (reply.user && reply.user.avatarUrl) ? reply.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                  const replyUsername = (reply.user && reply.user.username) ? reply.user.username : 'Ẩn danh';
+
                   repDiv.innerHTML = `
                       <div class="flex items-start space-x-3 pr-2 w-full">
-                          <img src="${reply.user.avatarUrl ? reply.user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="w-6 h-6 rounded-full object-cover shrink-0 border border-gray-100">
+                          <img src="${replyUserAvatar}" class="w-6 h-6 rounded-full object-cover shrink-0 border border-gray-100">
                           <div class="text-sm flex-1 min-w-0">
-                              <span class="font-bold text-gray-900 mr-1 hover:underline cursor-pointer">${reply.user.username}</span>
-                              <span class="text-gray-800 break-words">${reply.content}</span>
+                              <span class="font-bold text-gray-900 mr-1 hover:underline cursor-pointer">${replyUsername}</span>
+                              <span class="text-gray-800 break-words">${reply.content || ''}</span>
                               ${mediaHTML}
                               <div class="flex items-center space-x-3 text-[10px] text-gray-400 mt-0.5 font-medium select-none">
                                   <span>${reply.likeCount || 0} thích</span>
-                                  <button onclick="setReplyToUser('${commentId}', '${reply.user.username}')" class="hover:text-black font-semibold focus:outline-none">Trả lời</button>
+                                  <button onclick="setReplyToUser('${commentId}', '${replyUsername}')" class="hover:text-black font-semibold focus:outline-none">Trả lời</button>
                               </div>
                           </div>
                       </div>
@@ -232,17 +473,19 @@
       const statusText = document.getElementById('reply-status-text');
       const textInput = document.getElementById('comment-text-input');
 
-      statusText.innerText = `Đang trả lời @${username}...`;
-      statusBar.classList.remove('hidden');
+      if (statusText) statusText.innerText = `Đang trả lời @${username}...`;
+      if (statusBar) statusBar.classList.remove('hidden');
 
-      textInput.value = `@${username} `;
-      textInput.focus();
+      if (textInput) {
+          textInput.value = `@${username} `;
+          textInput.focus();
+      }
   }
 
   function cancelReplyState() {
       activeParentCommentId = null;
       const statusBar = document.getElementById('reply-status-bar');
-      if(statusBar) statusBar.classList.add('hidden');
+      if (statusBar) statusBar.classList.add('hidden');
   }
 
   function previewCommentImage(input) {
@@ -258,7 +501,8 @@
   }
 
   function clearImageCommentInput() {
-      document.getElementById('comment-image-input').value = "";
+      const fileInput = document.getElementById('comment-image-input');
+      if (fileInput) fileInput.value = "";
       document.getElementById('image-preview-container').classList.add('hidden');
       document.getElementById('image-preview-element').src = "";
   }
@@ -266,9 +510,11 @@
   function submitCommentOrReply() {
       const textInput = document.getElementById('comment-text-input');
       const fileInput = document.getElementById('comment-image-input');
+      if (!textInput) return;
+
       const contentValue = textInput.value.trim();
 
-      if (contentValue === "" && (!fileInput.files || fileInput.files.length === 0)) {
+      if (contentValue === "" && (!fileInput || !fileInput.files || fileInput.files.length === 0)) {
           return;
       }
 
@@ -279,7 +525,7 @@
       if (activeParentCommentId) {
           formData.append("parentId", activeParentCommentId);
       }
-      if (fileInput.files && fileInput.files[0]) {
+      if (fileInput && fileInput.files && fileInput.files[0]) {
           formData.append("imageFile", fileInput.files[0]);
       }
 
@@ -295,7 +541,7 @@
 
               if (activeParentCommentId) {
                   const repliesBox = document.getElementById(`replies-box-${activeParentCommentId}`);
-                  if(repliesBox) {
+                  if (repliesBox) {
                       repliesBox.classList.remove('hidden');
                       repliesBox.innerHTML = '';
                   }
@@ -305,15 +551,17 @@
                   const container = document.getElementById('modal-comments-box');
                   const newNode = createCommentNodeHTML(data);
 
-                  if(container.querySelector('p')) container.innerHTML = '';
+                  if (container.querySelector('p')) container.innerHTML = '';
 
                   container.appendChild(newNode);
 
                   const scrollZone = document.getElementById('modal-comments-scroll-zone');
-                  scrollZone.scrollTo({
-                      top: scrollZone.scrollHeight,
-                      behavior: 'smooth'
-                  });
+                  if (scrollZone) {
+                      scrollZone.scrollTo({
+                          top: scrollZone.scrollHeight,
+                          behavior: 'smooth'
+                      });
+                  }
               }
           } else {
               alert(data.message || "Không thể đăng bình luận");

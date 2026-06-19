@@ -126,7 +126,11 @@
                                             class="hover:scale-110 transition duration-200 text-gray-700">
                                         <i th:class="${post.isLikedByCurrentUser} ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart'"></i>
                                     </button>
-                                    <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
+                                    <button th:data-post-id="${post.id}"
+                                            onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                                            class="hover:text-gray-500 transition text-gray-700 focus:outline-none">
+                                        <i class="fa-regular fa-comment"></i>
+                                    </button>
                                 </div>
                                 <button th:if="${post.user.id != session.currentUser.id}"
                                         th:data-post-id="${post.id}"
@@ -142,16 +146,35 @@
                                class="font-semibold text-sm text-gray-900"
                                th:text="${post.likeCount != null ? post.likeCount : 0} + ' lượt thích'">0 lượt thích</p>
 
-                            <div class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
+                            <!-- Bình luận tiêu biểu (nhiều like nhất) -->
+                            <div th:if="${post.featuredComment != null}"
+                                 class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
                                 <div class="flex items-start space-x-1.5">
-                                    <span class="font-semibold text-gray-950 shrink-0">alex_vng</span>
-                                    <span class="text-gray-700 line-clamp-2">Đây là nội dung của một bình luận mẫu hiển thị trên bảng tin...</span>
+                                    <span class="font-semibold text-gray-950 shrink-0"
+                                          th:text="${post.featuredComment.user.username}">username</span>
+                                    <span class="text-gray-700 line-clamp-2"
+                                          th:text="${post.featuredComment.content}">Nội dung bình luận...</span>
                                 </div>
+                                <div th:if="${post.featuredComment.likeCount > 0}"
+                                     class="text-[11px] text-gray-400 pl-0.5"
+                                     th:text="${post.featuredComment.likeCount} + ' lượt thích'">0 lượt thích</div>
                             </div>
 
+                            <!-- Nút xem tất cả bình luận -->
                             <div th:if="${post.commentCount > 0}" class="pt-1">
-                                <button class="text-gray-400 text-xs font-medium hover:text-gray-600 transition"
+                                <button th:data-post-id="${post.id}"
+                                        onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                                        class="text-gray-400 text-xs font-medium hover:text-gray-600 transition focus:outline-none"
                                         th:text="'Xem tất cả ' + ${post.commentCount} + ' bình luận'">Xem bình luận</button>
+                            </div>
+
+                            <!-- Trường hợp chưa có bình luận nào -->
+                            <div th:if="${post.commentCount == 0}" class="pt-1">
+                                <button th:data-post-id="${post.id}"
+                                        onclick="openPostDetailModal(this.getAttribute('data-post-id'))"
+                                        class="text-gray-400 text-xs font-medium hover:text-gray-600 transition focus:outline-none">
+                                    Thêm bình luận...
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -219,6 +242,7 @@
 
 <div th:replace="~{modals/following-modal :: followingModal}"></div>
 <div th:replace="~{modals/media-modal :: mediaModal}"></div>
+<div th:replace="~{modals/post-detail-modal :: postDetailModal}"></div>
 
 <script>
     // Hàm kích hoạt mở Modal Đang theo dõi

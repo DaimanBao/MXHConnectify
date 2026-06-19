@@ -52,6 +52,9 @@ public class Post {
     @Transient
     private boolean isSavedByCurrentUser = false; // Biến tạm phục vụ lưu UI lưu bài viết, không lưu DB
 
+    @Transient
+    private Post featuredComment;
+
     // Quan hệ 1-N với Media
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Media> mediaList = new ArrayList<>();
