@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -88,5 +89,14 @@ public class PostService {
         // Hoặc bạn có thể dùng postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE)
         // Hãy kiểm tra các phương thức có sẵn trong PostRepository của bạn, dưới đây là cách viết chuẩn:
         return postRepository.countByUser_IdAndParentIdIsNullAndStatus(userId, PostStatus.ENABLE);
+    }
+
+    public List<Post> getUserPosts(Long userId) {
+        if (userId == null) {
+            return List.of(); // Trả về danh sách rỗng nếu userId truyền vào bị rỗng
+        }
+
+        // Gọi xuống Repository để lấy danh sách bài viết đang hoạt động (ENABLE)
+        return postRepository.findByUser_IdAndParentIdIsNullAndStatusOrderByCreatedAtDesc(userId, PostStatus.ENABLE);
     }
 }

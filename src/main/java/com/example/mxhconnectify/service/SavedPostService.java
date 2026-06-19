@@ -65,4 +65,10 @@ public class SavedPostService {
             post.setSavedByCurrentUser(isSaved);
         });
     }
+
+    @Transactional(readOnly = true)
+    public List<Post> getSavedPostsByUserId(Long userId) {
+        if (userId == null) return List.of();
+        return savedPostRepository.findSavedPostsByUserId(userId);
+    }
 }

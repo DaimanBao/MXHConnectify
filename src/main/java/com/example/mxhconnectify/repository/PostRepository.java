@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface PostRepository extends JpaRepository<Post,Long> {
     long countByUser_IdAndParentIdIsNullAndStatus(Long userId, PostStatus status);
 
@@ -31,5 +33,5 @@ public interface PostRepository extends JpaRepository<Post,Long> {
             "ORDER BY p.createdAt DESC")
     Page<Post> findExploreFeed(@Param("currentUserId") Long currentUserId, Pageable pageable);
 
-
+    List<Post> findByUser_IdAndParentIdIsNullAndStatusOrderByCreatedAtDesc(Long userId, PostStatus status);
 }

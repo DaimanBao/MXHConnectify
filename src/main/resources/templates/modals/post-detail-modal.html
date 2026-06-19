@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="postDetailModal">
+<div id="post-detail-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 md:p-10 hidden transition-opacity duration-300 opacity-0">
+
+  <button onclick="closePostDetailModal()" class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 transition z-50">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="bg-white w-full max-w-[935px] h-full max-h-[600px] md:max-h-[85vh] rounded-r-lg rounded-l-lg flex flex-col md:flex-row overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300">
+
+    <div class="w-full md:w-[60%] bg-black flex items-center justify-center relative aspect-square md:aspect-auto md:h-full group">
+      <div id="modal-media-container" class="w-full h-full flex items-center justify-center">
+      </div>
+
+      <button id="modal-media-prev" class="absolute left-3 bg-white/80 hover:bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center shadow transition opacity-0 group-hover:opacity-100 hidden z-10">
+        <i class="fa-solid fa-chevron-left text-sm"></i>
+      </button>
+      <button id="modal-media-next" class="absolute right-3 bg-white/80 hover:bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center shadow transition opacity-0 group-hover:opacity-100 hidden z-10">
+        <i class="fa-solid fa-chevron-right text-sm"></i>
+      </button>
+    </div>
+
+    <div class="w-full md:w-[40%] flex flex-col h-full bg-white border-l border-gray-100">
+
+      <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <img id="modal-user-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-gray-200" alt="Avatar">
+          <span id="modal-user-username" class="font-bold text-sm text-gray-900 hover:underline cursor-pointer">username</span>
+        </div>
+        <button class="text-gray-700 hover:text-gray-400"><i class="fa-solid fa-ellipsis"></i></button>
+      </div>
+
+      <div class="flex-1 p-3 overflow-y-auto space-y-3 text-sm text-gray-800">
+        <div class="flex items-start space-x-3">
+          <img id="modal-caption-avatar" src="" class="w-8 h-8 rounded-full object-cover border border-gray-100" alt="Avatar">
+          <div>
+            <span id="modal-caption-username" class="font-bold mr-2 text-gray-900">username</span>
+            <span id="modal-post-content">Nội dung caption bài viết...</span>
+            <p id="modal-post-date" class="text-[10px] text-gray-400 uppercase tracking-wide mt-2">1 ngày trước</p>
+          </div>
+        </div>
+        <div id="modal-comments-box" class="space-y-3 mt-4 pt-4 border-t border-gray-50">
+        </div>
+      </div>
+
+      <div class="p-3 border-t border-gray-100 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4 text-xl">
+            <button id="modal-like-btn" onclick="" class="hover:scale-110 transition duration-200 text-gray-700">
+              <i class=""></i>
+            </button>
+            <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
+          </div>
+          <button id="modal-save-btn" onclick="" class="text-xl hover:scale-110 transition duration-200 text-gray-700">
+            <i class=""></i>
+          </button>
+        </div>
+
+        <p id="modal-like-count" class="font-semibold text-sm text-gray-900">0 lượt thích</p>
+      </div>
+
+      <div class="p-3 border-t border-gray-100 flex items-center space-x-2 bg-gray-50">
+        <button class="text-xl text-gray-700"><i class="fa-regular fa-face-smile"></i></button>
+        <input type="text" placeholder="Thêm bình luận..." class="w-full text-sm bg-transparent border-none focus:outline-none focus:ring-0 text-gray-700" disabled>
+        <button class="text-blue-500 font-semibold text-sm opacity-50 cursor-default" disabled>Đăng</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
