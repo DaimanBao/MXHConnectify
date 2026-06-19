@@ -263,18 +263,18 @@ public class UserService {
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
             // Giả sử avatarUrl lưu dạng "/uploads/abc.png"
             // Bạn cần tách tên file ra và xóa file vật lý tương ứng
-            String oldFileName = user.getAvatarUrl().replace("/uploads/", "");
-            Path oldPath = Paths.get("E:/MXHConnectify/uploads/" + oldFileName);
+            String oldFileName = user.getAvatarUrl().replace("/avatar_uploads/", "");
+            Path oldPath = Paths.get("E:/MXHConnectify/avatar_uploads/" + oldFileName);
             Files.deleteIfExists(oldPath);
         }
 
         // 2. Lưu file mới như bình thường
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path path = Paths.get("E:/MXHConnectify/uploads/" + fileName);
+        Path path = Paths.get("E:/MXHConnectify/avatar_uploads/" + fileName);
         Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
         // 3. Cập nhật DB
-        user.setAvatarUrl("/uploads/" + fileName);
+        user.setAvatarUrl("/avatar_uploads/" + fileName);
         userRepository.save(user);
     }
 }

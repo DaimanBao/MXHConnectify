@@ -35,7 +35,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:E:/MXHConnectify/uploads/");
+        registry.addResourceHandler("/avatar_uploads/**")
+                .addResourceLocations("file:E:/MXHConnectify/avatar_uploads/");
+
+        registry.addResourceHandler("/post_uploads/**")
+                .addResourceLocations("file:E:/MXHConnectify/post_uploads/");
     }
 }
