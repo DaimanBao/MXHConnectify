@@ -1,0 +1,43 @@
+<div th:fragment="followingModal"
+     id="following-modal"
+     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300"
+     onclick="closeFollowingModal()">
+
+  <div class="bg-white w-full max-w-sm rounded-xl overflow-hidden shadow-xl transform scale-95 transition-transform duration-300"
+       onclick="event.stopPropagation()">
+
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div class="w-6"></div>
+      <h3 class="font-bold text-md text-gray-900">Đang theo dõi</h3>
+      <button onclick="closeFollowingModal()" class="text-gray-500 hover:text-gray-800 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="max-h-[350px] overflow-y-auto p-4 space-y-4">
+      <div th:each="user : ${followingUsers}" class="flex items-center justify-between">
+
+        <div class="flex items-center space-x-3 cursor-pointer"
+             th:data-username="${user.username}"
+             onclick="window.location.href='/profile/' + this.getAttribute('data-username')">
+          <img th:src="${user.avatarUrl != null && !user.avatarUrl.isEmpty() ? user.avatarUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+               class="w-10 h-10 rounded-full object-cover">
+          <div class="flex flex-col">
+            <span class="font-bold text-sm hover:underline" th:text="${user.username}">username</span>
+            <span class="text-xs text-gray-500 truncate max-w-[150px]" th:text="${user.fullName != null && !user.fullName.isEmpty() ? user.fullName : 'Người dùng'}">FullName</span>
+          </div>
+        </div>
+
+        <button th:data-username="${user.username}"
+                onclick="toggleFollowInHome(this, this.getAttribute('data-username'))"
+                class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition">
+          Hủy theo dõi
+        </button>
+      </div>
+
+      <div th:if="${followingUsers.isEmpty()}" class="text-xs text-gray-400 text-center py-4">
+        Danh sách trống.
+      </div>
+    </div>
+  </div>
+</div>
