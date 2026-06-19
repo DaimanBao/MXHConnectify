@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+
+<div th:fragment="mediaModal" id="mediaModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center backdrop-blur-sm">
+  <button onclick="closeMediaModal()" class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 transition z-50">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="relative w-full max-w-4xl h-[80vh] flex items-center justify-center px-12">
+    <button id="prevBtn" onclick="changeSlide(-1)" class="absolute left-4 text-white text-3xl bg-black/40 hover:bg-black/60 w-12 h-12 rounded-full flex items-center justify-center transition">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <div id="modalMediaContainer" class="w-full h-full flex items-center justify-center"></div>
+
+    <button id="nextBtn" onclick="changeSlide(1)" class="absolute right-4 text-white text-3xl bg-black/40 hover:bg-black/60 w-12 h-12 rounded-full flex items-center justify-center transition">
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <div id="mediaIndexIndicator" class="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white/80 font-medium text-sm">
+      1 / 1
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    let currentMediaList = [];
+        let currentSlideIndex = 0;
+
+        // Hàm mới: Quét toàn bộ thẻ input ẩn nằm trong vùng được click để gom thành mảng Array
+        function openMediaModalFromInputs(element) {
+            const inputElements = element.querySelectorAll('.media-item-data');
+            if (!inputElements || inputElements.length === 0) return;
+
+            currentMediaList = []; // Xóa trắng dữ liệu cũ trước khi nạp mới
+
+            // Vòng lặp gom dữ liệu sạch từ thuộc tính data-* của HTML5
+            inputElements.forEach(input => {
+                currentMediaList.push({
+                    id: input.getAttribute('data-id'),
+                    type: input.getAttribute('data-type'),
+                    url: input.getAttribute('data-url')
+                });
+            });
+
+            currentSlideIndex = 0;
+
+            // Bật Modal hiển thị lên màn hình
+            document.getElementById('mediaModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden'); // Khóa cuộn trang nền
+            renderSlide();
+        }
+
+        function closeMediaModal() {
+            document.getElementById('mediaModal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('modalMediaContainer').innerHTML = "";
+        }
+
+        function renderSlide() {
+            const container = document.getElementById('modalMediaContainer');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const indicator = document.getElementById('mediaIndexIndicator');
+
+            if (currentMediaList.length === 0) return;
+            const currentMedia = currentMediaList[currentSlideIndex];
+            container.innerHTML = "";
+
+            if (currentMedia.type === 'VIDEO') {
+                container.innerHTML = `<video src="${currentMedia.url}" controls autoplay class="max-w-full max-h-full object-contain rounded-md"></video>`;
+            } else {
+                container.innerHTML = `<img src="${currentMedia.url}" class="max-w-full max-h-full object-contain rounded-md shadow-2xl" alt="media">`;
+            }
+
+            indicator.innerText = `${currentSlideIndex + 1} / ${currentMediaList.length}`;
+            prevBtn.style.display = currentSlideIndex === 0 ? 'none' : 'flex';
+            nextBtn.style.display = currentSlideIndex === currentMediaList.length - 1 ? 'none' : 'flex';
+        }
+
+        function changeSlide(direction) {
+            let newIndex = currentSlideIndex + direction;
+            if (newIndex >= 0 && newIndex < currentMediaList.length) {
+                currentSlideIndex = newIndex;
+                renderSlide();
+            }
+        }
+
+        // Lắng nghe phím điều hướng trên bàn phím máy tính
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('mediaModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft') changeSlide(-1);
+                if (e.key === 'ArrowRight') changeSlide(1);
+                if (e.key === 'Escape') closeMediaModal();
+            }
+        });
+  </script>
+</div>
+
+
+<div th:fragment="commentModal" id="commentModal" class="fixed inset-0 z-50 hidden bg-black/60">
+</div>
+
+</body>
+</html>

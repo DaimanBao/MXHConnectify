@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,4 +49,17 @@ public class Post {
     // Quan hệ 1-N với Media
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Media> mediaList = new ArrayList<>();
+
+    public String getMediaListJson() {
+        try {
+            if (this.mediaList == null || this.mediaList.isEmpty()) {
+                return "[]";
+            }
+            // Biến đổi danh sách Object sang chuỗi JSON chuẩn chỉ
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this.mediaList);
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
 }
