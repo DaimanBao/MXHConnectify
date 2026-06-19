@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo bài viết mới</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+<div class="bg-white w-full max-w-lg rounded-lg shadow-md overflow-hidden">
+  <div class="border-b p-4 text-center font-semibold">Tạo bài viết mới</div>
+
+  <form th:action="@{/post/create}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+
+        <textarea name="content" rows="4" placeholder="Bạn đang nghĩ gì?"
+                  class="w-full border-none focus:ring-0 p-2 text-sm resize-none"></textarea>
+
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition"
+         onclick="document.getElementById('fileInput').click()">
+      <i class="fas fa-images text-3xl text-gray-400 mb-2"></i>
+      <span class="text-xs text-gray-500">Chọn ảnh hoặc video (Tối đa 5 ảnh, 1 video)</span>
+      <input type="file" name="files" id="fileInput" multiple accept="image/*,video/*" class="hidden" onchange="previewFiles(this)">
+    </div>
+
+    <div id="previewArea" class="grid grid-cols-3 gap-2 mt-2"></div>
+
+    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded transition">
+      Đăng bài
+    </button>
+  </form>
+</div>
+
+<script>
+  function previewFiles(input) {
+      const previewArea = document.getElementById('previewArea');
+      previewArea.innerHTML = '';
+
+      Array.from(input.files).forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.className = 'w-full h-20 object-cover rounded';
+              previewArea.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+      });
+  }
+</script>
+</body>
+</html>
