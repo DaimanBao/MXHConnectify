@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,6 @@
 
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
-
     <main class="flex-1 pl-20 xl:pl-64 flex justify-center overflow-y-auto h-full">
         <div class="w-full max-w-[935px] grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 px-4">
 
@@ -39,104 +38,88 @@
                         </div>
                         <span class="text-xs text-gray-500 w-16 truncate text-center">lan_anh.dev</span>
                     </div>
-                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
-                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
-                        </div>
-                        <span class="text-xs text-gray-500 w-16 truncate text-center">alex_vng</span>
-                    </div>
-                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
-                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
-                            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
-                        </div>
-                        <span class="text-xs text-gray-500 w-16 truncate text-center">jennie_it</span>
-                    </div>
-                    <div class="flex flex-col items-center space-y-1 cursor-pointer flex-shrink-0">
-                        <div class="p-[2px] bg-gradient-to-tr from-yellow-500 to-purple-600 rounded-full">
-                            <img src="https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150" class="w-14 h-14 rounded-full object-cover border-2 border-white" alt="story">
-                        </div>
-                        <span class="text-xs text-gray-500 w-16 truncate text-center">code_chill</span>
-                    </div>
                 </div>
 
                 <div class="space-y-6">
 
-                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <div th:each="post : ${posts}" class="bg-white border border-gray-200 rounded-xl mb-6 shadow-sm overflow-hidden">
+
                         <div class="flex items-center justify-between p-3 border-b border-gray-100">
                             <div class="flex items-center space-x-3">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" class="w-8 h-8 rounded-full object-cover" alt="avatar">
-                                <div>
-                                    <span class="font-semibold text-sm hover:underline cursor-pointer">alex_vng</span>
-                                    <span class="text-gray-400 text-xs block">Quy Nhơn, Bình Định</span>
+                                <img th:src="${post.user.avatarUrl != null ? post.user.avatarUrl : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}"
+                                     class="w-9 h-9 rounded-full object-cover border border-gray-200" alt="avatar">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-sm block hover:underline cursor-pointer text-gray-900 leading-tight"
+                                          th:text="${post.user.fullName != null ? post.user.fullName : post.user.username}">Full Name</span>
+                                    <span class="text-gray-500 text-[11px] leading-tight mt-0.5">
+                                        <span th:text="${post.user.username}">username</span> • Quy Nhơn, Bình Định
+                                    </span>
                                 </div>
                             </div>
-                            <button class="hover:text-gray-500"><i class="fa-solid fa-ellipsis"></i></button>
+                            <button class="text-gray-500 hover:text-black px-2 py-1"><i class="fa-solid fa-ellipsis"></i></button>
                         </div>
-                        <div class="w-full bg-black flex items-center justify-center max-h-[580px] overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800" class="w-full object-cover" alt="post image">
+
+                        <div class="p-4 pt-3 text-sm text-gray-800 border-b border-gray-50">
+                            <div class="whitespace-pre-line leading-relaxed" th:text="${post.content}">Nội dung bài viết chữ hiển thị ở đây trước...</div>
+                            <div class="text-gray-400 text-[10px] mt-2" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Giờ đăng</div>
                         </div>
+
+                        <div th:with="mediaCount=${post.mediaList.size()},
+                                      hasVideo=${post.mediaList.?[type == 'VIDEO'].size() > 0},
+                                      videoObj=${hasVideo ? post.mediaList.?[type == 'VIDEO'][0] : null},
+                                      onlyImages=${post.mediaList.?[type == 'IMAGE']}"
+                             class="w-full bg-black flex items-center justify-center relative select-none">
+
+                            <div th:if="${hasVideo}" class="w-full relative group">
+                                <video th:src="${videoObj.url}" controls class="w-full max-h-[500px] object-contain bg-black"></video>
+
+                                <div th:if="${mediaCount > 1}" class="absolute top-3 right-3 bg-black/60 text-white font-semibold text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
+                                    <i class="fa-regular fa-images mr-1"></i> <span th:text="'+' + (${mediaCount} - 1)">+1</span>
+                                </div>
+                            </div>
+
+                            <div th:if="${!hasVideo and mediaCount > 0}" class="w-full grid gap-0.5 bg-gray-100"
+                                 th:classappend="${mediaCount == 1} ? 'grid-cols-1' : 'grid-cols-2'">
+
+                                <div th:each="img, iterStat : ${onlyImages}" th:if="${iterStat.index < 2}" class="relative aspect-square w-full overflow-hidden bg-black flex items-center justify-center">
+                                    <img th:src="${img.url}" class="w-full h-full object-cover" alt="post-img">
+
+                                    <div th:if="${iterStat.index == 1 and mediaCount > 2}" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white cursor-pointer transition hover:bg-black/50">
+                                        <span class="text-2xl font-bold" th:text="'+' + (${mediaCount} - 2)">+3</span>
+                                        <span class="text-[11px] font-medium tracking-wider uppercase mt-1">Xem tất cả</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="p-3 space-y-2">
-                            <div class="flex justify-between items-center text-2xl">
-                                <div class="flex space-x-4">
-                                    <button class="hover:opacity-60 transition text-red-500"><i class="fa-solid fa-heart"></i></button>
-                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-comment"></i></button>
-                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-paper-plane"></i></button>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4 text-xl">
+                                    <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-heart"></i></button>
+                                    <button class="hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-comment"></i></button>
                                 </div>
-                                <button class="hover:opacity-60 transition"><i class="fa-regular fa-bookmark"></i></button>
+                                <button class="text-xl hover:text-gray-500 transition text-gray-700"><i class="fa-regular fa-bookmark"></i></button>
                             </div>
-                            <div class="font-semibold text-sm">1,245 lượt thích</div>
-                            <div class="text-sm">
-                                <span class="font-semibold mr-2">alex_vng</span> Bình yên một thoáng quê hương... 🌊✨ #travel #quynhon
+
+                            <p class="font-semibold text-sm text-gray-900" th:text="${post.likeCount} + ' lượt thích'">0 lượt thích</p>
+
+                            <div class="text-sm bg-gray-50 p-2.5 rounded-lg space-y-1 border border-gray-100">
+                                <div class="flex items-start space-x-1.5">
+                                    <span class="font-semibold text-gray-950 shrink-0">alex_vng</span>
+                                    <span class="text-gray-700 line-clamp-2">Đây là nội dung của một bình luận ngẫu nhiên mẫu được hiển thị bao quát trên trang Home, không kèm theo phần media hình ảnh/video của comment đó.</span>
+                                </div>
                             </div>
-                            <div class="text-gray-400 text-sm cursor-pointer hover:text-gray-500">Xem tất cả 42 bình luận</div>
-                            <div class="text-gray-400 text-[10px] uppercase tracking-wide">2 giờ trước</div>
-                        </div>
-                        <div class="p-3 border-t border-gray-100 flex items-center justify-between">
-                            <div class="flex items-center space-x-2 flex-1 mr-2">
-                                <i class="fa-regular fa-face-smile text-xl text-gray-500 cursor-pointer"></i>
-                                <input type="text" placeholder="Thêm bình luận..." class="w-full text-sm outline-none bg-transparent">
+
+                            <div th:if="${post.commentCount > 0}" class="pt-1">
+                                <button class="text-gray-400 text-xs font-medium hover:text-gray-600 transition"
+                                        th:text="'Xem tất cả ' + ${post.commentCount} + ' bình luận'">Xem bình luận</button>
                             </div>
-                            <button class="text-blue-500 font-semibold text-sm hover:text-blue-700 transition">Đăng</button>
                         </div>
                     </div>
 
-                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100">
-                            <div class="flex items-center space-x-3">
-                                <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150" class="w-8 h-8 rounded-full object-cover" alt="avatar">
-                                <div>
-                                    <span class="font-semibold text-sm hover:underline cursor-pointer">jennie_it</span>
-                                    <span class="text-gray-400 text-xs block">Hồ Chí Minh, Việt Nam</span>
-                                </div>
-                            </div>
-                            <button class="hover:text-gray-500"><i class="fa-solid fa-ellipsis"></i></button>
-                        </div>
-                        <div class="w-full bg-black flex items-center justify-center max-h-[580px] overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800" class="w-full object-cover" alt="post image">
-                        </div>
-                        <div class="p-3 space-y-2">
-                            <div class="flex justify-between items-center text-2xl">
-                                <div class="flex space-x-4">
-                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-heart"></i></button>
-                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-comment"></i></button>
-                                    <button class="hover:opacity-60 transition"><i class="fa-regular fa-paper-plane"></i></button>
-                                </div>
-                                <button class="hover:opacity-60 transition"><i class="fa-regular fa-bookmark"></i></button>
-                            </div>
-                            <div class="font-semibold text-sm">340 lượt thích</div>
-                            <div class="text-sm">
-                                <span class="font-semibold mr-2">jennie_it</span> Lại một ngày ngồi fix bug quên lối về... 💻☕ #springboot #developer
-                            </div>
-                            <div class="text-gray-400 text-sm cursor-pointer hover:text-gray-500">Xem tất cả 12 bình luận</div>
-                            <div class="text-gray-400 text-[10px] uppercase tracking-wide">5 giờ trước</div>
-                        </div>
-                        <div class="p-3 border-t border-gray-100 flex items-center justify-between">
-                            <div class="flex items-center space-x-2 flex-1 mr-2">
-                                <i class="fa-regular fa-face-smile text-xl text-gray-500 cursor-pointer"></i>
-                                <input type="text" placeholder="Thêm bình luận..." class="w-full text-sm outline-none bg-transparent">
-                            </div>
-                            <button class="text-blue-500 font-semibold text-sm hover:text-blue-700 transition">Đăng</button>
-                        </div>
+                    <div th:if="${#lists.isEmpty(posts)}" class="text-center py-12 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <i class="fa-regular fa-images text-5xl text-gray-300 mb-3 block"></i>
+                        <p class="text-gray-500 text-sm max-w-xs mx-auto">Chưa có bài viết nào. Hãy theo dõi thêm người dùng khác hoặc đăng bài viết đầu tiên!</p>
                     </div>
 
                 </div>
@@ -166,26 +149,6 @@
                             <div>
                                 <span class="font-semibold text-xs block hover:underline cursor-pointer">lucy.dev</span>
                                 <span class="text-gray-400 text-[10px] block">Có lan_anh.dev theo dõi</span>
-                            </div>
-                        </div>
-                        <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="w-8 h-8 rounded-full object-cover" alt="suggest">
-                            <div>
-                                <span class="font-semibold text-xs block hover:underline cursor-pointer">clara_le</span>
-                                <span class="text-gray-400 text-[10px] block">Gợi ý từ Instagram</span>
-                            </div>
-                        </div>
-                        <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" class="w-8 h-8 rounded-full object-cover" alt="suggest">
-                            <div>
-                                <span class="font-semibold text-xs block hover:underline cursor-pointer">quynh_nhon_chill</span>
-                                <span class="text-gray-400 text-[10px] block">Mới tham gia Instagram</span>
                             </div>
                         </div>
                         <button class="text-blue-500 text-xs font-bold hover:text-blue-700">Theo dõi</button>
